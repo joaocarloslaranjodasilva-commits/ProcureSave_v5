@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ProcureSave</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Newsreader:ital,wght@0,300;1,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a1628;--navy2:#0f2040;
+  --blue:#1d6aff;--blue2:#1558e0;--blue3:#4d8eff;
+  --blue-soft:#e8f0ff;--blue-dim:rgba(29,106,255,.07);
+  --blue-glow:rgba(29,106,255,.25);
+  --white:#ffffff;--off:#f5f8ff;--bg:#eef3fc;
+  --slate:#64748b;--slate2:#94a3b8;--slate3:#cbd5e1;
+  --text:#0c1a2e;--text2:#374151;
+  --border:#dde6f5;--border2:#c8d6ef;
+  --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --shadow:0 1px 3px rgba(10,22,40,.05),0 4px 16px rgba(10,22,40,.07);
+  --shadow-lg:0 8px 40px rgba(10,22,40,.13);
+  --shadow-blue:0 8px 32px rgba(29,106,255,.2);
+  --r:12px;--r-lg:16px;--r-sm:8px;
+  --sidebar:248px;
+  --font:'Bricolage Grotesque',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* LOGIN */
+#login-wall{position:fixed;inset:0;z-index:9999;display:flex;background:var(--navy)}
+#login-wall.gone{display:none}
+.ll{width:52%;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden}
+.ll::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 65% 35%,rgba(29,106,255,.16),transparent 65%),radial-gradient(ellipse 50% 60% at 15% 75%,rgba(29,106,255,.09),transparent 60%)}
+.ll-grid{position:absolute;inset:0;opacity:.035;background-image:linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px);background-size:48px 48px}
+.ll-inner{position:relative;z-index:1;max-width:400px;width:100%}
+.ll-brand{font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:3.5rem}
+.ll-brand em{color:#4d8eff;font-style:normal}
+.ll-h{font-family:'Newsreader',serif;font-size:2.9rem;font-weight:300;color:#fff;line-height:1.18;margin-bottom:1.2rem;font-style:italic}
+.ll-h strong{font-style:normal;font-weight:300;color:#4d8eff}
+.ll-sub{font-size:.875rem;color:rgba(255,255,255,.42);line-height:1.75;margin-bottom:3rem}
+.ll-stats{display:flex;gap:2.5rem}
+.ls-val{font-size:1.7rem;font-weight:800;color:#fff;letter-spacing:-.04em}
+.ls-lab{font-size:.68rem;color:rgba(255,255,255,.32);margin-top:2px;font-weight:500}
+.lr{flex:1;background:#fff;display:flex;align-items:center;justify-content:center;padding:3rem}
+.lf{width:100%;max-width:360px}
+.lf-title{font-size:1.55rem;font-weight:800;color:var(--text);letter-spacing:-.04em;margin-bottom:.3rem}
+.lf-sub{font-size:.875rem;color:var(--slate);margin-bottom:2rem}
+.lf-label{font-size:.68rem;font-weight:700;color:var(--slate);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:6px}
+.lf-inp{width:100%;background:var(--off);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 15px;font-family:var(--font);font-size:.9rem;color:var(--text);outline:none;transition:all .2s;margin-bottom:1rem}
+.lf-inp:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-dim)}
+.lf-inp::placeholder{color:var(--slate2)}
+.lf-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:13px;font-family:var(--font);font-size:.875rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:-.01em}
+.lf-btn:hover{background:var(--blue2);box-shadow:var(--shadow-blue);transform:translateY(-1px)}
+.lf-btn.sec{background:var(--off);color:var(--text2);margin-top:.75rem;font-weight:600;box-shadow:none}
+.lf-btn.sec:hover{background:var(--blue-soft);color:var(--blue);box-shadow:none;transform:none}
+.lf-err{background:var(--red-bg);border:1px solid #fecaca;border-radius:var(--r-sm);padding:9px 13px;font-size:.8rem;color:var(--red);margin-bottom:1rem;display:none;font-weight:500}
+.lf-err.on{display:block}
+.lf-div{display:flex;align-items:center;gap:.75rem;margin:.9rem 0;color:var(--slate2);font-size:.75rem;font-weight:500}
+.lf-div::before,.lf-div::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:50;padding:0 0 1.25rem}
+.sidebar::after{content:'';position:absolute;top:0;right:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.055) 20%,rgba(255,255,255,.055) 80%,transparent)}
+.s-logo{padding:1.4rem 1.3rem 1.2rem;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.055)}
+.s-logo-icon{width:32px;height:32px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;box-shadow:0 4px 12px rgba(29,106,255,.35)}
+.s-logo-text{font-size:1.05rem;font-weight:800;color:#fff;letter-spacing:-.025em}
+.s-logo-text em{color:#4d8eff;font-style:normal}
+.s-logo-text small{display:block;font-size:.56rem;font-weight:500;color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.nav-sec{padding:.85rem 1.3rem .2rem;font-size:.57rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.2)}
+.nav-item{display:flex;align-items:center;gap:9px;margin:1px 8px;border-radius:9px;padding:8px 11px;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.38);cursor:pointer;transition:all .16s}
+.nav-item:hover{color:rgba(255,255,255,.78);background:rgba(255,255,255,.05)}
+.nav-item.active{color:#fff;background:rgba(29,106,255,.22);box-shadow:inset 0 0 0 1px rgba(29,106,255,.28)}
+.n-icon{font-size:.8rem;width:15px;text-align:center;opacity:.7}
+.nav-item.active .n-icon{opacity:1}
+.n-dot{display:none;width:4px;height:4px;border-radius:50%;background:#4d8eff;margin-left:auto;flex-shrink:0}
+.nav-item.active .n-dot{display:block}
+.s-bottom{margin-top:auto;padding:.6rem 8px;border-top:1px solid rgba(255,255,255,.055)}
+.s-user{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;cursor:pointer;transition:.2s}
+.s-user:hover{background:rgba(255,255,255,.05)}
+.s-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#4d8eff);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:#fff;flex-shrink:0}
+.s-name{font-size:.78rem;font-weight:600;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-role{font-size:.62rem;color:rgba(255,255,255,.25)}
+.s-logout{margin-left:auto;font-size:.62rem;color:rgba(255,255,255,.22);cursor:pointer;padding:3px 6px;border-radius:4px;transition:.18s;flex-shrink:0}
+.s-logout:hover{color:rgba(255,255,255,.55);background:rgba(255,255,255,.06)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{padding:.85rem 1.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(238,243,252,.93);backdrop-filter:blur(20px);position:sticky;top:0;z-index:40}
+.topbar-l{display:flex;align-items:center;gap:12px}
+.page-title{font-size:.95rem;font-weight:800;color:var(--text);letter-spacing:-.025em}
+.topbar-r{display:flex;gap:.5rem;align-items:center}
+
+/* BUTTONS */
+.btn{border:none;border-radius:var(--r-sm);padding:8px 15px;font-size:.79rem;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .16s;display:inline-flex;align-items:center;gap:5px;letter-spacing:-.01em}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue2);box-shadow:var(--shadow-blue);transform:translateY(-1px)}
+.btn-ghost{background:#fff;color:var(--text2);border:1.5px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.btn-soft{background:var(--blue-soft);color:var(--blue);border:1px solid rgba(29,106,255,.14)}
+.btn-soft:hover{background:#dce8ff}
+.btn-sm{padding:6px 11px;font-size:.73rem}
+.btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* CONTENT */
+.content{padding:1.6rem 1.75rem;flex:1}
+.screen{display:none;animation:fadeUp .28s ease}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* FORMS */
+label{font-size:.67rem;font-weight:700;color:var(--slate);display:block;margin-bottom:5px;letter-spacing:.08em;text-transform:uppercase}
+input,select,textarea{width:100%;background:#fff;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-family:var(--font);font-size:.85rem;outline:none;transition:all .18s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-dim)}
+input::placeholder,textarea::placeholder{color:var(--slate2)}
+textarea{resize:vertical;min-height:100px;line-height:1.65}
+select option{background:#fff}
+.fr{display:grid;gap:1rem;margin-bottom:1rem}
+.fr.c2{grid-template-columns:1fr 1fr}
+.fr.c3{grid-template-columns:1fr 1fr 1fr}
+
+/* CARDS */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:1.4rem;margin-bottom:1.2rem;box-shadow:var(--shadow)}
+.ct{font-size:.875rem;font-weight:800;color:var(--text);margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:8px;letter-spacing:-.025em}
+.ctl{display:flex;align-items:center;gap:8px}
+
+/* KPI */
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:1.3rem 1.4rem;box-shadow:var(--shadow);transition:all .2s;position:relative;overflow:hidden}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.k-accent{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r-lg) var(--r-lg) 0 0}
+.k-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:.85rem}
+.k-label{font-size:.64rem;font-weight:700;color:var(--slate);margin-bottom:.25rem;letter-spacing:.07em;text-transform:uppercase}
+.k-val{font-size:1.65rem;font-weight:800;color:var(--text);line-height:1;letter-spacing:-.045em}
+.k-sub{font-size:.68rem;color:var(--slate2);margin-top:.2rem}
+.kpi.kb .k-accent{background:var(--blue)}.kpi.kb .k-icon{background:var(--blue-soft);color:var(--blue)}
+.kpi.kg .k-accent{background:var(--green)}.kpi.kg .k-icon{background:var(--green-bg);color:var(--green)}
+.kpi.ka .k-accent{background:var(--amber)}.kpi.ka .k-icon{background:var(--amber-bg);color:var(--amber)}
+.kpi.kn .k-accent{background:var(--navy2)}.kpi.kn .k-icon{background:var(--blue-soft);color:var(--navy2)}
+
+/* TABLE */
+.tw{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+thead th{background:var(--off);color:var(--slate);padding:10px 15px;text-align:left;font-weight:700;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:11px 15px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{cursor:pointer;transition:background .1s}
+tbody tr:hover td{background:var(--blue-dim)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.bg{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.bb{background:var(--blue-soft);color:var(--blue);border:1px solid rgba(29,106,255,.18)}
+.ba{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a}
+.br{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.bm{background:var(--off);color:var(--slate);border:1px solid var(--border)}
+.bp{background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe}
+
+/* SECTION */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.st{font-size:.975rem;font-weight:800;color:var(--text);letter-spacing:-.025em}
+
+/* DROP */
+.drop{border:2px dashed var(--border2);border-radius:var(--r-lg);padding:2.2rem 2rem;text-align:center;cursor:pointer;transition:all .22s;background:var(--off)}
+.drop:hover,.drop.drag{border-color:var(--blue);background:var(--blue-dim);border-style:solid}
+
+/* AI BOX */
+.ai-box{background:linear-gradient(135deg,var(--blue-dim),rgba(14,165,233,.03));border:1px solid rgba(29,106,255,.16);border-radius:var(--r);padding:1.1rem}
+.ai-tag{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:.55rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.ai-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue-glow);flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ai-text{font-size:.83rem;line-height:1.75;color:var(--text2);white-space:pre-wrap;word-break:break-word}
+.ai-text.streaming::after{content:'▋';color:var(--blue);animation:blink .8s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* OPP */
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:1rem;margin-top:1rem}
+.ocard{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:1.2rem;box-shadow:var(--shadow);transition:all .18s;position:relative;overflow:hidden}
+.ocard:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.ocard::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px}
+.ocard.high::before{background:var(--blue)}
+.ocard.medium::before{background:var(--amber)}
+.ocard.low::before{background:var(--slate3)}
+.o-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:.35rem;letter-spacing:-.015em}
+.o-desc{font-size:.76rem;color:var(--slate);line-height:1.6;margin-bottom:.85rem}
+.o-foot{display:flex;align-items:center;justify-content:space-between}
+.o-save{font-size:1rem;font-weight:800;color:var(--blue);letter-spacing:-.025em}
+
+/* STATUS */
+.sm{display:none;align-items:center;gap:9px;padding:9px 13px;border-radius:var(--r-sm);font-size:.8rem;margin-top:.85rem;font-weight:500}
+.sm.on{display:flex}
+.sm.loading{background:var(--blue-dim);border:1px solid rgba(29,106,255,.18);color:var(--blue)}
+.sm.error{background:var(--red-bg);border:1px solid #fecaca;color:var(--red)}
+.sm.success{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+.spin{width:13px;height:13px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BM VIZ */
+.bm-track{height:8px;background:var(--border);border-radius:999px;position:relative;margin:8px 0}
+.bm-range{position:absolute;top:0;height:100%;background:linear-gradient(90deg,var(--blue-soft),rgba(29,106,255,.18));border-radius:999px;border:1px solid rgba(29,106,255,.15)}
+.bm-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px var(--amber)}
+.bm-dot.fin{box-shadow:0 0 0 2px var(--blue);background:var(--blue)}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--text);color:#fff;border-radius:var(--r);padding:11px 17px;font-size:.8rem;font-weight:500;z-index:9999;transform:translateY(18px);opacity:0;transition:all .28s;pointer-events:none;max-width:280px;box-shadow:var(--shadow-lg)}
+.toast.on{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(238,243,252,.86);backdrop-filter:blur(10px);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
+.loading-overlay.on{display:flex}
+.l-spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.l-text{color:var(--blue);font-size:.83rem;font-weight:600}
+
+/* DETAIL */
+.back{display:inline-flex;align-items:center;gap:5px;color:var(--slate);font-size:.79rem;font-weight:600;cursor:pointer;margin-bottom:1.3rem;transition:color .18s}
+.back:hover{color:var(--blue)}
+.dgrid{display:grid;grid-template-columns:2fr 1fr;gap:1.3rem}
+.frow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.frow:last-child{border:none}
+.fl{color:var(--slate)}.fv{color:var(--text);font-weight:600;text-align:right}
+
+/* IMPORT */
+.imp-prev{overflow-x:auto;margin-top:.85rem;border-radius:var(--r);border:1px solid var(--border)}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.85rem}
+.mitem{background:var(--off);border:1px solid var(--border);border-radius:var(--r-sm);padding:.65rem 1rem;display:flex;align-items:center;justify-content:space-between;font-size:.76rem}
+.mc{color:var(--slate);font-weight:500}.mar{color:var(--blue);font-weight:800;font-size:1rem}.mf{color:var(--text);font-weight:700}
+
+/* SETUP */
+.sw{max-width:460px;margin:2rem auto}
+.si{width:52px;height:52px;background:var(--blue-soft);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.3rem}
+
+@media(max-width:900px){.kgrid{grid-template-columns:1fr 1fr}.dgrid{grid-template-columns:1fr}.sidebar{display:none}.main{margin-left:0}.ll{display:none}.lr{width:100%}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-wall">
+  <div class="ll">
+    <div class="ll-grid"></div>
+    <div class="ll-inner">
+      <div class="ll-brand">Procure<em>Save</em></div>
+      <div class="ll-h">Smarter deals.<br><strong>Measurable savings.</strong></div>
+      <div class="ll-sub">The intelligent procurement platform that transforms your ERP data into negotiation advantages — powered by AI that learns from every deal you make.</div>
+      <div class="ll-stats">
+        <div><div class="ls-val">23%</div><div class="ls-lab">Avg savings / deal</div></div>
+        <div><div class="ls-val">4.2×</div><div class="ls-lab">Year 1 ROI</div></div>
+        <div><div class="ls-val">&lt; 5min</div><div class="ls-lab">First insight</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="lr">
+    <div class="lf">
+      <div class="lf-title">Welcome back</div>
+      <div class="lf-sub">Sign in to your procurement workspace</div>
+      <div class="lf-err" id="lf-err">Incorrect username or password.</div>
+      <label class="lf-label">Username</label>
+      <input class="lf-inp" type="text" id="l-user" placeholder="Enter username" autocomplete="username"/>
+      <label class="lf-label">Password</label>
+      <input class="lf-inp" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
+      <button class="lf-btn" onclick="doLogin()">Sign in →</button>
+      <div class="lf-div">or</div>
+      <button class="lf-btn sec" onclick="demoLogin()">Continue with Demo Mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-logo">
+    <div class="s-logo-icon">💼</div>
+    <div class="s-logo-text">Procure<em>Save</em><small>Intelligent Procurement</small></div>
+  </div>
+  <div class="nav-sec">Overview</div>
+  <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard"><span class="n-icon">◉</span> Dashboard<div class="n-dot"></div></div>
+  <div class="nav-item" onclick="nav('opportunities')" id="nav-opportunities"><span class="n-icon">💡</span> Opportunities<div class="n-dot"></div></div>
+  <div class="nav-sec">Procurement</div>
+  <div class="nav-item" onclick="nav('projects')" id="nav-projects"><span class="n-icon">▦</span> Saving Projects<div class="n-dot"></div></div>
+  <div class="nav-item" onclick="nav('offers')" id="nav-offers"><span class="n-icon">⊞</span> Offer Tracker<div class="n-dot"></div></div>
+  <div class="nav-sec">Import & AI</div>
+  <div class="nav-item" onclick="nav('import')" id="nav-import"><span class="n-icon">⬆</span> CSV Import<div class="n-dot"></div></div>
+  <div class="nav-item" onclick="nav('offer-upload')" id="nav-offer-upload"><span class="n-icon">⊡</span> Offer Upload<div class="n-dot"></div></div>
+  <div class="nav-item" onclick="nav('ai-coach')" id="nav-ai-coach"><span class="n-icon">◈</span> AI Coach<div class="n-dot"></div></div>
+  <div class="nav-sec">Admin</div>
+  <div class="nav-item" onclick="nav('setup')" id="nav-setup"><span class="n-icon">⚙</span> Setup<div class="n-dot"></div></div>
+  <div class="s-bottom">
+    <div class="s-user">
+      <div class="s-avatar" id="sb-av">?</div>
+      <div style="flex:1;min-width:0"><div class="s-name" id="sb-name">Not connected</div><div class="s-role" id="sb-co">–</div></div>
+      <div class="s-logout" onclick="doLogout()" title="Sign out">⏻</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-l"><div class="page-title" id="topbar-title">Dashboard</div></div>
+    <div class="topbar-r">
+      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-primary btn-sm" onclick="nav('import')">⬆ Import Data</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- SETUP -->
+    <div class="screen active" id="screen-setup">
+      <div class="sw">
+        <div class="si">🔗</div>
+        <div style="font-size:1.45rem;font-weight:800;color:var(--text);letter-spacing:-.04em;margin-bottom:.35rem">Connect your data</div>
+        <div style="font-size:.875rem;color:var(--slate);margin-bottom:2rem;line-height:1.65">Link Airtable and Anthropic to unlock the full platform. Keys are stored in your browser only.</div>
+        <div class="card">
+          <div class="fr"><div><label>Airtable Personal Access Token</label><input type="password" id="s-token" placeholder="pat_xxxxxxxxxxxx..."/></div></div>
+          <div class="fr"><div><label>Airtable Base ID</label><input type="text" id="s-base" placeholder="appXXXXXXXXXXXXXX" value="appk283F6HEiPeGiy"/></div></div>
+          <div class="fr"><div><label>Anthropic API Key</label><input type="password" id="s-anthropic" placeholder="sk-ant-..."/></div></div>
+          <button class="btn btn-primary" style="width:100%;padding:12px;font-size:.85rem;justify-content:center" onclick="connectAndLoad()">Connect & Load Dashboard →</button>
+          <div class="sm" id="setup-status"></div>
+        </div>
+        <p style="color:var(--slate2);font-size:.75rem;text-align:center">No Airtable? <span style="color:var(--blue);cursor:pointer;font-weight:700" onclick="demoMode()">Use Demo Mode →</span></p>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="screen" id="screen-dashboard">
+      <div class="kgrid">
+        <div class="kpi kb"><div class="k-accent"></div><div class="k-icon">💰</div><div class="k-label">Total Savings</div><div class="k-val" id="k-savings">–</div><div class="k-sub">realized</div></div>
+        <div class="kpi kn"><div class="k-accent"></div><div class="k-icon">▦</div><div class="k-label">Projects</div><div class="k-val" id="k-projects">–</div><div class="k-sub">total</div></div>
+        <div class="kpi ka"><div class="k-accent"></div><div class="k-icon">💡</div><div class="k-label">AI Opportunities</div><div class="k-val" id="k-opps">–</div><div class="k-sub">identified</div></div>
+        <div class="kpi kg"><div class="k-accent"></div><div class="k-icon">📈</div><div class="k-label">Avg Savings %</div><div class="k-val" id="k-avg">–</div><div class="k-sub">per project</div></div>
+      </div>
+      <div id="ai-banner" style="display:none" class="card">
+        <div class="ct"><div class="ctl">🤖 AI found opportunities</div><button class="btn btn-soft btn-sm" onclick="nav('opportunities')">View all →</button></div>
+        <div id="ai-banner-text" class="ai-text" style="font-size:.8rem"></div>
+      </div>
+      <div class="sh" style="margin-top:.5rem"><div class="st">Recent Projects</div><button class="btn btn-ghost btn-sm" onclick="nav('projects')">View all →</button></div>
+      <div class="tw"><table><thead><tr><th>Project</th><th>Category</th><th>Supplier</th><th>Status</th><th>Initial</th><th>Final</th><th>Savings €</th><th>%</th></tr></thead><tbody id="dash-tbody"></tbody></table></div>
+    </div>
+
+    <!-- CSV IMPORT -->
+    <div class="screen" id="screen-import">
+      <div style="max-width:800px">
+        <div class="sh"><div class="st">Import from ERP / Invoicing Tool</div></div>
+        <div class="card">
+          <div class="ct"><div class="ctl">① Upload CSV Export</div></div>
+          <p style="color:var(--slate);font-size:.83rem;margin-bottom:1.3rem;line-height:1.7">Export procurement data from SAP, Workday, Oracle, or any invoicing tool. AI detects and maps all columns automatically.</p>
+          <div class="drop" id="csv-drop" onclick="document.getElementById('csv-file').click()">
+            <div style="font-size:2rem;margin-bottom:.6rem">📊</div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:.25rem">Drop CSV or click to upload</div>
+            <div style="font-size:.78rem;color:var(--slate)">AI maps columns automatically — any ERP format</div>
+          </div>
+          <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSV(event)"/>
+          <div id="csv-status" class="sm"></div>
+        </div>
+        <div id="csv-prev" style="display:none">
+          <div class="card">
+            <div class="ct"><div class="ctl">② Column Mapping</div><span class="badge bb">✦ AI Detected</span></div>
+            <p style="color:var(--slate);font-size:.79rem;margin-bottom:.6rem">AI matched your CSV columns to ProcureSave fields:</p>
+            <div class="mgrid" id="mgrid"></div>
+          </div>
+          <div class="card">
+            <div class="ct"><div class="ctl">③ Data Preview</div><span id="csv-rc" class="badge bm"></span></div>
+            <div class="imp-prev" id="imp-prev"></div>
+          </div>
+          <div class="card" style="border-color:rgba(29,106,255,.18)">
+            <div class="ct"><div class="ctl">④ AI Analysis</div></div>
+            <div class="ai-box"><div class="ai-tag">Scanning for opportunities</div><div class="ai-text" id="csv-ai">Click "Analyze" to scan for savings opportunities.</div></div>
+            <button class="btn btn-primary" style="width:100%;margin-top:.85rem;justify-content:center" onclick="analyzeCSV()">🤖 Analyze & Find Opportunities</button>
+          </div>
+          <button class="btn btn-primary" style="width:100%;padding:12px;font-size:.875rem;justify-content:center" onclick="importData()">💾 Import to Dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OFFER UPLOAD -->
+    <div class="screen" id="screen-offer-upload">
+      <div style="max-width:820px">
+        <div class="sh"><div class="st">Offer Upload & AI Extraction</div></div>
+
+        <!-- Step 1: Upload / Paste -->
+        <div class="card">
+          <div class="ct"><div class="ctl">① Upload or Paste Offer</div></div>
+          <p style="color:var(--slate);font-size:.83rem;margin-bottom:1rem;line-height:1.65">Upload a PDF offer, paste text, or describe the offer manually. AI will extract all fields automatically.</p>
+          <div class="drop" style="padding:1.3rem" id="offer-drop" onclick="document.getElementById('offer-pdf').click()">
+            <div style="font-size:1.8rem;margin-bottom:.4rem">📎</div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.2rem">Drop PDF here or click to select</div>
+            <div style="font-size:.75rem;color:var(--slate)">Text is extracted automatically with PDF.js</div>
+          </div>
+          <input type="file" id="offer-pdf" accept=".pdf,.txt" style="display:none" onchange="handleOfferFile(event)"/>
+          <div style="text-align:center;margin:.65rem 0;color:var(--slate2);font-size:.74rem;font-weight:600">— or paste text directly —</div>
+          <textarea id="offer-text" placeholder="Paste offer text here (Ctrl+A, Ctrl+C from PDF reader)...&#10;&#10;AI extracts: supplier, total price, day rate, days, scope, dates."></textarea>
+          <button class="btn btn-soft" style="width:100%;margin-top:.85rem;justify-content:center;font-size:.85rem" onclick="extractOffer()">🤖 Extract Fields with AI</button>
+          <div id="extract-status" class="sm"></div>
+        </div>
+
+        <!-- Step 2: Extracted fields + project assignment -->
+        <div class="card" id="offer-ext" style="display:none">
+          <div class="ct"><div class="ctl">② Review Extracted Fields</div><span class="badge bb">✦ AI Extracted</span></div>
+          <div class="fr c3">
+            <div><label>Supplier</label><input type="text" id="of-sup"/></div>
+            <div><label>Total Price</label><input type="number" id="of-total"/></div>
+            <div><label>Currency</label><input type="text" id="of-cur" value="EUR"/></div>
+          </div>
+          <div class="fr c3">
+            <div><label>Day Rate</label><input type="number" id="of-dr"/></div>
+            <div><label>Project Days</label><input type="number" id="of-days"/></div>
+            <div><label>Start Date</label><input type="date" id="of-start"/></div>
+          </div>
+          <div class="fr"><div><label>Scope / Description</label><textarea id="of-scope" style="min-height:55px"></textarea></div></div>
+          <div id="offer-insight" class="ai-box" style="margin-bottom:1rem;display:none">
+            <div class="ai-tag">AI Negotiation Insight</div>
+            <div class="ai-text" id="offer-ins-text"></div>
+          </div>
+        </div>
+
+        <!-- Step 3: Project assignment -->
+        <div class="card" id="offer-assign" style="display:none">
+          <div class="ct"><div class="ctl">③ Assign to Project</div></div>
+
+          <!-- Toggle: existing vs new -->
+          <div style="display:flex;gap:.5rem;margin-bottom:1rem" id="proj-toggle">
+            <button class="btn btn-primary btn-sm" id="tog-existing" onclick="toggleProjMode('existing')">Select existing project</button>
+            <button class="btn btn-ghost btn-sm" id="tog-new" onclick="toggleProjMode('new')">+ Create new project</button>
+          </div>
+
+          <!-- Existing project -->
+          <div id="proj-existing-block">
+            <label>Saving Project</label>
+            <select id="offer-project" style="margin-bottom:.75rem">
+              <option value="">– Select project –</option>
+            </select>
+          </div>
+
+          <!-- New project -->
+          <div id="proj-new-block" style="display:none">
+            <div class="fr c2">
+              <div><label>New Project Name</label><input type="text" id="new-proj-name" placeholder="e.g. SAP Implementation Q3"/></div>
+              <div><label>Category</label><input type="text" id="new-proj-cat" placeholder="e.g. IT Consulting"/></div>
+            </div>
+            <div class="fr c2">
+              <div><label>Region</label><input type="text" id="new-proj-region" placeholder="e.g. DACH"/></div>
+              <div><label>Status</label>
+                <select id="new-proj-status">
+                  <option value="In Negotiation">In Negotiation</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Final">Final</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="fr" style="margin-top:.5rem"><div>
+            <label>Offer Stage</label>
+            <select id="offer-type">
+              <option value="First Offer">First Offer (Initial)</option>
+              <option value="Counter Offer">Counter Offer (Mid-negotiation)</option>
+              <option value="Final Offer">Final Offer (Agreed)</option>
+            </select>
+          </div></div>
+
+          <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;margin-top:.5rem;font-size:.875rem" onclick="saveOffer()">💾 Save Offer & Go to RFQ Dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RFQ DASHBOARD -->
+    <div class="screen" id="screen-rfq">
+      <div class="sh">
+        <div class="st">RFQ Dashboard — Active Negotiations</div>
+        <button class="btn btn-primary btn-sm" onclick="nav('offer-upload')">+ Add Offer</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kgrid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi kb"><div class="k-accent"></div><div class="k-icon">⟳</div><div class="k-label">Active RFQs</div><div class="k-val" id="rfq-active">–</div><div class="k-sub">in negotiation</div></div>
+        <div class="kpi ka"><div class="k-accent"></div><div class="k-icon">⏳</div><div class="k-label">Awaiting Response</div><div class="k-val" id="rfq-pending">–</div><div class="k-sub">no counter yet</div></div>
+        <div class="kpi kg"><div class="k-accent"></div><div class="k-icon">💰</div><div class="k-label">Savings Potential</div><div class="k-val" id="rfq-potential">–</div><div class="k-sub">vs first offer</div></div>
+        <div class="kpi kn"><div class="k-accent"></div><div class="k-icon">✓</div><div class="k-label">Closed Deals</div><div class="k-val" id="rfq-closed">–</div><div class="k-sub">this period</div></div>
+      </div>
+
+      <!-- Negotiation timeline per project -->
+      <div id="rfq-content"></div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="screen" id="screen-projects">
+      <div class="sh"><div class="st">Saving Projects</div><input type="text" id="proj-search" placeholder="Search..." style="width:200px;font-size:.79rem;padding:7px 11px"/></div>
+      <div class="tw"><table><thead><tr><th>Project</th><th>Category</th><th>Region</th><th>Status</th><th>Initial</th><th>Final</th><th>Savings</th><th>%</th><th>Benchmark</th></tr></thead><tbody id="proj-tbody"></tbody></table></div>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="screen" id="screen-detail">
+      <div class="back" onclick="nav('projects')">← Back to Projects</div>
+      <div id="detail-content"></div>
+    </div>
+
+    <!-- OFFERS -->
+    <div class="screen" id="screen-offers">
+      <div class="sh"><div class="st">All Offers</div><button class="btn btn-primary btn-sm" onclick="nav('offer-upload')">+ Add Offer</button></div>
+      <div class="tw"><table><thead><tr><th>Project</th><th>Stage</th><th>Supplier</th><th>Total Price</th><th>Day Rate</th><th>Days</th><th>Currency</th></tr></thead><tbody id="offers-tbody"></tbody></table></div>
+    </div>
+
+    <!-- OPPORTUNITIES -->
+    <div class="screen" id="screen-opportunities">
+      <div class="sh"><div class="st">AI Optimization Opportunities</div><button class="btn btn-primary btn-sm" onclick="runOpps()">◈ Re-analyze</button></div>
+      <div class="ai-box" style="margin-bottom:1.3rem"><div class="ai-tag">Executive Summary</div><div class="ai-text" id="opp-sum">Click "Re-analyze" to generate AI opportunities.</div></div>
+      <div class="ogrid" id="ogrid"></div>
+    </div>
+
+    <!-- AI COACH -->
+    <div class="screen" id="screen-ai-coach">
+      <div class="sh"><div class="st">AI Procurement Coach</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem">
+        <div class="card"><div class="ct"><div class="ctl">📊 Benchmark Analysis</div></div><label>Select Project</label><select id="ai-bm" style="margin-bottom:.85rem"></select><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="aiAct('benchmark')">Analyze Position</button><div class="ai-box" style="margin-top:.85rem"><div class="ai-tag">Analysis</div><div class="ai-text" id="ao-bm">Select a project.</div></div></div>
+        <div class="card"><div class="ct"><div class="ctl">🎯 Negotiation Strategy</div></div><label>Select Project</label><select id="ai-neg" style="margin-bottom:.85rem"></select><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="aiAct('negotiation')">Generate Strategy</button><div class="ai-box" style="margin-top:.85rem"><div class="ai-tag">Strategy</div><div class="ai-text" id="ao-neg">Select a project.</div></div></div>
+        <div class="card"><div class="ct"><div class="ctl">💰 Savings Potential</div></div><label>Select Project</label><select id="ai-sav" style="margin-bottom:.85rem"></select><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="aiAct('savings')">Calculate</button><div class="ai-box" style="margin-top:.85rem"><div class="ai-tag">Potential</div><div class="ai-text" id="ao-sav">Select a project.</div></div></div>
+        <div class="card"><div class="ct"><div class="ctl">🧠 Learn from Deals</div></div><button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:.85rem" onclick="aiAct('learn')">Analyze All Negotiations</button><div class="ai-box"><div class="ai-tag">Learned Patterns</div><div class="ai-text" id="ao-learn">Click to analyze negotiation patterns.</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="l-spin"></div><div class="l-text" id="l-txt">Loading...</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// AUTH
+const USERS={'admin':'procure2024','joao':'ProcureSave1','demo':'demo'};
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim().toLowerCase();
+  const p=document.getElementById('l-pass').value;
+  const err=document.getElementById('lf-err');
+  if(USERS[u]&&USERS[u]===p){
+    err.classList.remove('on');
+    document.getElementById('login-wall').classList.add('gone');
+    document.getElementById('sb-name').textContent=u[0].toUpperCase()+u.slice(1);
+    sessionStorage.setItem('ps_u',u);nav('setup');
+  }else{err.classList.add('on');document.getElementById('l-pass').value='';document.getElementById('l-pass').focus()}
+}
+function demoLogin(){document.getElementById('login-wall').classList.add('gone');demoMode()}
+function doLogout(){sessionStorage.removeItem('ps_u');document.getElementById('l-user').value='';document.getElementById('l-pass').value='';document.getElementById('login-wall').classList.remove('gone')}
+window.addEventListener('DOMContentLoaded',()=>{
+  const u=sessionStorage.getItem('ps_u');
+  if(u){document.getElementById('login-wall').classList.add('gone');document.getElementById('sb-name').textContent=u[0].toUpperCase()+u.slice(1)}
+  document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+  document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('l-pass').focus()});
+});
+
+// STATE
+let TOKEN='',BASE_ID='appk283F6HEiPeGiy',AI_KEY='';
+let DB={projects:[],offers:[],suppliers:[],benchmarks:[],companies:[],users:[]};
+let CSV_DATA=[],CSV_HEADERS=[],CSV_MAP={};
+let DEMO=false,OPPS=[];
+
+// HELPERS
+const fmt=(n,c='EUR')=>{if(n==null||n==='')return'–';const x=parseFloat(n);if(isNaN(x))return n;return new Intl.NumberFormat('de-DE',{style:'currency',currency:c,maximumFractionDigits:0}).format(x)};
+const fmtP=n=>{if(n==null||n==='')return'–';const x=parseFloat(n);return isNaN(x)?'–':x.toFixed(1)+'%'};
+const gf=(o,...ks)=>{for(const k of ks){if(o[k]!=null&&o[k]!=='')return o[k]}return null};
+const sbadge=s=>{if(!s)return'<span class="badge bm">–</span>';const m={'Draft':'bm','In Negotiation':'ba','Final':'bb','Closed':'bg'};return`<span class="badge ${m[s]||'bm'}">${s}</span>`};
+const showL=(t='Loading...')=>{document.getElementById('l-txt').textContent=t;document.getElementById('loading').classList.add('on')};
+const hideL=()=>document.getElementById('loading').classList.remove('on');
+const toast=(m,t='')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast on '+(t||'');setTimeout(()=>el.className='toast',3500)};
+function setSt(id,type,msg){const el=document.getElementById(id);el.className='sm on '+type;el.innerHTML=type==='loading'?`<div class="spin"></div><span>${msg}</span>`:`<span>${type==='error'?'✗':'✓'} ${msg}</span>`}
+
+// AIRTABLE
+async function atFetch(tbl){
+  if(DEMO)return[];
+  const r=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(tbl)}?pageSize=100`,{headers:{Authorization:`Bearer ${TOKEN}`}});
+  if(!r.ok)throw new Error(`${r.status} on ${tbl}`);
+  const d=await r.json();return(d.records||[]).map(r=>({id:r.id,...r.fields}));
+}
+async function atCreate(tbl,fields){
+  const r=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(tbl)}`,{method:'POST',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({fields})});
+  if(!r.ok)throw new Error(await r.text());return r.json();
+}
+
+// CONNECT
+async function connectAndLoad(){
+  TOKEN=document.getElementById('s-token').value.trim();
+  BASE_ID=document.getElementById('s-base').value.trim()||'appk283F6HEiPeGiy';
+  AI_KEY=document.getElementById('s-anthropic').value.trim();
+  if(!TOKEN){setSt('setup-status','error','Enter your Airtable token');return}
+  setSt('setup-status','loading','Connecting...');
+  try{await loadAll();setSt('setup-status','success','Connected!');setTimeout(()=>nav('dashboard'),500)}
+  catch(e){setSt('setup-status','error',e.message)}
+}
+function demoMode(){
+  DEMO=true;
+  DB.projects=[
+    {id:'p1','Project Title':'SAP Implementation Support','Category':'IT Consulting','Region':'DACH','Status':'Closed','Initial Offer Total':280000,'Final Offer Total':218000,'Savings €':62000,'Savings %':22.1,'Benchmark P25':190000,'Benchmark Median':240000,'Benchmark P75':300000,'AI Benchmark Insight':'Initial offer was 17% above market median. Strong negotiation result.'},
+    {id:'p2','Project Title':'Marketing Agency Retainer','Category':'Marketing','Region':'EU','Status':'In Negotiation','Initial Offer Total':120000,'Final Offer Total':null,'Savings €':null,'Savings %':null},
+    {id:'p3','Project Title':'Cloud Infrastructure Setup','Category':'IT Infrastructure','Region':'Global','Status':'Final','Initial Offer Total':95000,'Final Offer Total':78000,'Savings €':17000,'Savings %':17.9},
+    {id:'p4','Project Title':'HR Software License','Category':'Software','Region':'DACH','Status':'Draft','Initial Offer Total':45000,'Final Offer Total':null,'Savings €':null,'Savings %':null},
+    {id:'p5','Project Title':'Legal Advisory Services','Category':'Legal','Region':'EU','Status':'Closed','Initial Offer Total':180000,'Final Offer Total':144000,'Savings €':36000,'Savings %':20.0},
+  ];
+  DB.offers=[
+    {id:'o1','Saving Project':['p1'],'Offer Type':'First Offer','Supplier':'TechCorp GmbH','Total Price':280000,'Currency':'EUR','Day Rate':1400,'Project Days':200},
+    {id:'o2','Saving Project':['p1'],'Offer Type':'Final Offer','Supplier':'TechCorp GmbH','Total Price':218000,'Currency':'EUR','Day Rate':1090,'Project Days':200},
+  ];
+  DB.companies=[{id:'c1','Company Name':'Demo Company GmbH'}];
+  DB.users=[{id:'u1','Name':'Demo User'}];
+  updSidebar();nav('dashboard');toast('Demo mode active');
+}
+async function loadAll(){
+  showL('Loading...');
+  try{
+    const r=await Promise.allSettled([atFetch('Saving Project'),atFetch('Offer'),atFetch('Supplier'),atFetch('Benchmark'),atFetch('Company'),atFetch('User')]);
+    DB.projects=r[0].status==='fulfilled'?r[0].value:[];
+    DB.offers=r[1].status==='fulfilled'?r[1].value:[];
+    DB.suppliers=r[2].status==='fulfilled'?r[2].value:[];
+    DB.benchmarks=r[3].status==='fulfilled'?r[3].value:[];
+    DB.companies=r[4].status==='fulfilled'?r[4].value:[];
+    DB.users=r[5].status==='fulfilled'?r[5].value:[];
+    updSidebar();fillSels();
+  }finally{hideL()}
+}
+async function refreshAll(){if(!TOKEN&&!DEMO)return nav('setup');if(!DEMO)await loadAll();renderCur();toast('Refreshed ✓')}
+function updSidebar(){
+  const u=DB.users[0];const c=DB.companies[0];
+  const name=u?(gf(u,'Name','User','Email')||'User'):'User';
+  const co=c?(gf(c,'Company Name','Name')||'–'):(DEMO?'Demo Mode':'–');
+  document.getElementById('sb-name').textContent=name;
+  document.getElementById('sb-co').textContent=co;
+  document.getElementById('sb-av').textContent=name[0].toUpperCase();
+}
+
+// NAV
+const TITLES={dashboard:'Dashboard',opportunities:'AI Opportunities',projects:'Saving Projects',detail:'Project Detail',offers:'Offer Tracker',import:'CSV Import','offer-upload':'Offer Upload','ai-coach':'AI Coach',setup:'Setup'};
+function nav(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('screen-'+n)?.classList.add('active');
+  document.getElementById('nav-'+n)?.classList.add('active');
+  document.getElementById('topbar-title').textContent=TITLES[n]||n;
+  if(n==='dashboard')renderDash();
+  else if(n==='projects')renderProjects();
+  else if(n==='offers')renderOffers();
+  else if(n==='opportunities')renderOpps();
+  else if(n==='ai-coach')fillSels();
+}
+function renderCur(){const a=document.querySelector('.screen.active');if(!a)return;nav(a.id.replace('screen-',''))}
+
+// DASHBOARD
+function renderDash(){
+  let ts=0,ps=0,pn=0;
+  DB.projects.forEach(p=>{
+    const s=parseFloat(gf(p,'Savings €','Savings')||0);if(!isNaN(s)&&s>0)ts+=s;
+    const pc=parseFloat(gf(p,'Savings %','savings_pct')||0);if(!isNaN(pc)&&pc>0){ps+=pc;pn++}
+  });
+  document.getElementById('k-savings').textContent=fmt(ts);
+  document.getElementById('k-projects').textContent=DB.projects.length;
+  document.getElementById('k-opps').textContent=OPPS.length||'–';
+  document.getElementById('k-avg').textContent=pn?fmtP(ps/pn):'–';
+  const tb=document.getElementById('dash-tbody');
+  if(!DB.projects.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--slate2);padding:2.5rem">No projects — import a CSV to get started</td></tr>';return}
+  tb.innerHTML=DB.projects.slice(0,8).map(p=>{
+    const s=gf(p,'Savings €','Savings');const pc=gf(p,'Savings %','savings_pct');
+    return`<tr onclick="showDetail('${p.id}')">
+      <td><strong style="color:var(--text);font-weight:700">${gf(p,'Project Title','Project Name','Name','Title')||'–'}</strong></td>
+      <td><span class="badge bm">${gf(p,'Category','Service Type')||'–'}</span></td>
+      <td style="color:var(--slate)">${gf(p,'Supplier','supplier_name')||'–'}</td>
+      <td>${sbadge(gf(p,'Status')||'')}</td>
+      <td>${gf(p,'Initial Offer Total')!=null?fmt(gf(p,'Initial Offer Total')):'–'}</td>
+      <td>${gf(p,'Final Offer Total')!=null?fmt(gf(p,'Final Offer Total')):'–'}</td>
+      <td style="color:var(--blue);font-weight:700">${s!=null?fmt(s):'–'}</td>
+      <td style="color:var(--green);font-weight:600">${pc!=null?fmtP(pc):'–'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// PROJECTS
+function renderProjects(){
+  const tb=document.getElementById('proj-tbody');
+  if(!DB.projects.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--slate2);padding:2.5rem">No projects — import CSV to get started</td></tr>';return}
+  tb.innerHTML=DB.projects.map(p=>{
+    const bm=gf(p,'Benchmark Median','Median');const init=gf(p,'Initial Offer Total','Initial Total');
+    let bmB='<span class="badge bm">–</span>';
+    if(bm&&init){const d=((parseFloat(init)-parseFloat(bm))/parseFloat(bm)*100);bmB=d>10?`<span class="badge br">+${d.toFixed(0)}%</span>`:d<-10?`<span class="badge bg">${d.toFixed(0)}%</span>`:`<span class="badge bb">At market</span>`}
+    const s=gf(p,'Savings €');const pc=gf(p,'Savings %');
+    return`<tr onclick="showDetail('${p.id}')">
+      <td><strong style="color:var(--text);font-weight:700">${gf(p,'Project Title','Project Name','Name','Title')||'–'}</strong></td>
+      <td><span class="badge bm">${gf(p,'Category','Service Type')||'–'}</span></td>
+      <td>${gf(p,'Region','Country')||'–'}</td>
+      <td>${sbadge(gf(p,'Status')||'')}</td>
+      <td>${gf(p,'Initial Offer Total')!=null?fmt(gf(p,'Initial Offer Total')):'–'}</td>
+      <td>${gf(p,'Final Offer Total')!=null?fmt(gf(p,'Final Offer Total')):'–'}</td>
+      <td style="color:var(--blue);font-weight:700">${s!=null?fmt(s):'–'}</td>
+      <td style="color:var(--green);font-weight:600">${pc!=null?fmtP(pc):'–'}</td>
+      <td>${bmB}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('proj-search').oninput=function(){
+    const q=this.value.toLowerCase();
+    document.querySelectorAll('#proj-tbody tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none');
+  };
+}
+
+// DETAIL
+function showDetail(id){
+  const p=DB.projects.find(x=>x.id===id);if(!p)return;
+  const name=gf(p,'Project Title','Project Name','Name','Title')||'–';
+  const init=gf(p,'Initial Offer Total','Initial Total');
+  const fin=gf(p,'Final Offer Total','Final Total');
+  const sav=gf(p,'Savings €','Savings');const pct=gf(p,'Savings %','savings_pct');
+  const p25=gf(p,'Benchmark P25','P25');const med=gf(p,'Benchmark Median','Median');const p75=gf(p,'Benchmark P75','P75');
+  const ai=gf(p,'AI Benchmark Insight','AI Insight','ai_insight');
+  const ro=DB.offers.filter(o=>{const l=o['Saving Project'];return l&&(Array.isArray(l)?l.includes(id):l===id||l===name)});
+  let ip=50,fp=30;
+  if(p25&&p75&&init){const r=parseFloat(p75)-parseFloat(p25);ip=Math.min(Math.max(((parseFloat(init)-parseFloat(p25))/r)*80+10,5),95)}
+  if(p25&&p75&&fin){const r=parseFloat(p75)-parseFloat(p25);fp=Math.min(Math.max(((parseFloat(fin)-parseFloat(p25))/r)*80+10,5),95)}
+  document.getElementById('detail-content').innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.4rem;flex-wrap:wrap">
+      <div style="flex:1"><h2 style="font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-.04em;margin-bottom:.45rem">${name}</h2>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">${sbadge(gf(p,'Status')||'')}<span class="badge bm">${gf(p,'Category','Service Type')||'–'}</span><span class="badge bm">📍 ${gf(p,'Region','Country')||'–'}</span></div></div>
+    </div>
+    <div class="dgrid">
+      <div>
+        ${sav!=null?`<div style="text-align:center;padding:1.6rem;background:linear-gradient(135deg,var(--blue-dim),rgba(29,106,255,.02));border:1px solid rgba(29,106,255,.14);border-radius:var(--r-lg);margin-bottom:1.2rem">
+          <div style="font-size:.62rem;font-weight:700;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem">REALIZED SAVINGS</div>
+          <div style="font-size:2.8rem;font-weight:800;color:var(--blue);line-height:1;letter-spacing:-.05em">${fmt(sav)}</div>
+          <div style="color:var(--green);margin-top:.25rem;font-weight:600;font-size:.95rem">${fmtP(pct)} saved</div>
+        </div>`:''}
+        <div class="card">
+          <div class="ct"><div class="ctl">💰 Negotiation Overview</div></div>
+          <div class="frow"><span class="fl">Initial Offer</span><span class="fv">${init!=null?fmt(init):'–'}</span></div>
+          <div class="frow"><span class="fl">Final Offer</span><span class="fv">${fin!=null?fmt(fin):'–'}</span></div>
+          <div class="frow"><span class="fl">Savings €</span><span class="fv" style="color:var(--blue)">${sav!=null?fmt(sav):'–'}</span></div>
+          <div class="frow"><span class="fl">Savings %</span><span class="fv" style="color:var(--green)">${pct!=null?fmtP(pct):'–'}</span></div>
+        </div>
+        ${ro.length?`<div class="card"><div class="ct"><div class="ctl">📎 Offer Timeline</div><span class="badge bm">${ro.length} offers</span></div>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            ${ro.map((o,i)=>`${i>0?'<div style="display:flex;align-items:center;color:var(--slate2);font-size:.85rem">→</div>':''}<div style="flex:1;min-width:120px;background:var(--off);border:1px solid var(--border);border-radius:var(--r);padding:.9rem"><div style="font-size:.6rem;font-weight:700;color:var(--blue);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.2rem">${gf(o,'Offer Type','Type')||'Offer'}</div><div style="font-size:1.1rem;font-weight:800;color:var(--text);letter-spacing:-.03em">${gf(o,'Total Price')!=null?fmt(gf(o,'Total Price')):'–'}</div><div style="font-size:.7rem;color:var(--slate);margin-top:.15rem">${gf(o,'Supplier')||''}</div></div>`).join('')}
+          </div></div>`:''}
+      </div>
+      <div>
+        ${(p25||med||p75)?`<div class="card"><div class="ct"><div class="ctl">📊 Benchmark Position</div></div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;font-weight:600;color:var(--slate);margin-bottom:.25rem"><span>P25</span><span>Median</span><span>P75</span></div>
+          <div class="bm-track">
+            <div class="bm-range" style="left:10%;width:80%"></div>
+            ${init!=null?`<div class="bm-dot" style="left:${ip}%;background:var(--off)" title="Initial: ${fmt(init)}"></div>`:''}
+            ${fin!=null?`<div class="bm-dot fin" style="left:${fp}%" title="Final: ${fmt(fin)}"></div>`:''}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;margin-top:.35rem"><span style="color:var(--slate)">${p25?fmt(p25):'–'}</span><span style="font-weight:700;color:var(--text)">${med?fmt(med):'–'}</span><span style="color:var(--slate)">${p75?fmt(p75):'–'}</span></div>
+          <div style="display:flex;gap:1.2rem;font-size:.67rem;color:var(--slate);margin-top:.4rem"><span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;border:2px solid var(--amber);display:inline-block"></span>Initial</span><span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:var(--blue);display:inline-block"></span>Final</span></div>
+        </div>`:''}
+        ${ai?`<div class="card"><div class="ct"><div class="ctl">AI Insight</div></div><div class="ai-box"><div class="ai-tag">Benchmark Insight</div><div class="ai-text">${ai}</div></div></div>`:''}
+        <div class="card"><div class="ct"><div class="ctl">Details</div></div>${['Category','Region','Status','Currency','Supplier'].map(k=>gf(p,k)?`<div class="frow"><span class="fl">${k}</span><span class="fv">${gf(p,k)}</span></div>`:'').join('')}</div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="aiDetailIns('${id}')">◈ Get AI Strategy</button>
+        <div class="ai-box" style="margin-top:.85rem;display:none" id="d-ai-box"><div class="ai-tag">Strategy</div><div class="ai-text" id="d-ai-txt"></div></div>
+      </div>
+    </div>`;
+  nav('detail');document.getElementById('nav-projects').classList.add('active');
+}
+
+// OFFERS
+function renderOffers(){
+  const tb=document.getElementById('offers-tbody');
+  if(!DB.offers.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--slate2);padding:2.5rem">No offers — use Offer Upload to add</td></tr>';return}
+  tb.innerHTML=DB.offers.map(o=>{
+    const pid=Array.isArray(o['Saving Project'])?o['Saving Project'][0]:o['Saving Project'];
+    const proj=DB.projects.find(p=>p.id===pid);
+    const pname=proj?(gf(proj,'Project Title','Project Name','Name')||pid):(pid||'–');
+    const ot=gf(o,'Offer Type','Type')||'–';
+    const tc=ot.includes('First')||ot.includes('Initial')?'ba':ot.includes('Final')?'bg':'bb';
+    return`<tr><td><strong style="color:var(--text);font-weight:700">${pname}</strong></td><td><span class="badge ${tc}">${ot}</span></td><td>${gf(o,'Supplier','supplier_name')||'–'}</td><td style="color:var(--blue);font-weight:600">${gf(o,'Total Price')!=null?fmt(gf(o,'Total Price')):'–'}</td><td>${gf(o,'Day Rate')!=null?fmt(gf(o,'Day Rate')):'–'}</td><td>${gf(o,'Project Days')||'–'}</td><td>${gf(o,'Currency')||'EUR'}</td><td>${o['Needs Review']?'<span class="badge ba">Review</span>':'<span class="badge bg">✓ OK</span>'}</td></tr>`;
+  }).join('');
+}
+
+// CSV
+function handleCSV(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    const lines=evt.target.result.split('\n').filter(l=>l.trim());
+    CSV_HEADERS=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+    CSV_DATA=lines.slice(1).map(line=>{const vals=line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));const obj={};CSV_HEADERS.forEach((h,i)=>obj[h]=vals[i]||'');return obj}).filter(r=>Object.values(r).some(v=>v));
+    showCSVPrev();
+  };reader.readAsText(file);
+}
+function showCSVPrev(){
+  setSt('csv-status','success',`Loaded ${CSV_DATA.length} rows, ${CSV_HEADERS.length} columns`);
+  const fm={'Project Title':['project','title','name','initiative'],'Category':['category','type','service','commodity'],'Supplier':['supplier','vendor','provider'],'Initial Offer Total':['initial','first','original','budget','invoice','total','cost','amount'],'Final Offer Total':['final','agreed','contracted','actual'],'Savings €':['saving','savings','reduction'],'Savings %':['saving%','%saved'],'Region':['region','country','location'],'Status':['status','stage'],'Currency':['currency','cur']};
+  CSV_MAP={};
+  CSV_HEADERS.forEach(h=>{const hl=h.toLowerCase();for(const[f,kws]of Object.entries(fm)){if(kws.some(k=>hl.includes(k))&&!CSV_MAP[f]){CSV_MAP[f]=h;break}}});
+  document.getElementById('mgrid').innerHTML=Object.entries(CSV_MAP).map(([f,c])=>`<div class="mitem"><span class="mc">${c}</span><span class="mar">→</span><span class="mf">${f}</span></div>`).join('');
+  document.getElementById('csv-rc').textContent=`${CSV_DATA.length} rows`;
+  document.getElementById('imp-prev').innerHTML=`<table style="font-size:.73rem"><thead><tr>${CSV_HEADERS.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${CSV_DATA.slice(0,5).map(r=>`<tr>${CSV_HEADERS.map(h=>`<td style="color:var(--text2)">${r[h]||'–'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  document.getElementById('csv-prev').style.display='block';
+}
+async function analyzeCSV(){
+  if(!AI_KEY){toast('Add Anthropic API key in Setup','error');return}
+  const out=document.getElementById('csv-ai');out.textContent='Analyzing...';out.classList.add('streaming');
+  await streamClaude(`Analyze this ERP/procurement CSV (${CSV_DATA.length} rows, columns: ${CSV_HEADERS.join(', ')}).\nSample: ${JSON.stringify(CSV_DATA.slice(0,8))}\n\nProvide:\n1. What this data contains (1 sentence)\n2. Top 3-5 savings opportunities with estimated € amounts\n3. Highest optimization categories/suppliers\n4. Immediate recommended actions\n\nMax 280 words. Be specific and data-driven.`,out,'You are a senior procurement analyst. Be concise, specific, actionable.');
+}
+async function importData(){
+  if(!TOKEN&&!DEMO){toast('Connect Airtable first','error');return}
+  showL(`Importing ${CSV_DATA.length} projects...`);
+  let ok=0,fail=0;
+  for(const row of CSV_DATA){
+    try{
+      const fields={};
+      for(const[f,c]of Object.entries(CSV_MAP)){const v=row[c];if(v&&v!==''){if(['Initial Offer Total','Final Offer Total','Savings €','Savings %'].includes(f)){const n=parseFloat(v.replace(/[^0-9.-]/g,''));if(!isNaN(n))fields[f]=n}else fields[f]=v}}
+      if(DEMO){DB.projects.push({id:'i_'+Date.now()+'_'+ok,...fields});ok++}else{await atCreate('Saving Project',fields);ok++}
+    }catch{fail++}
+  }
+  hideL();if(!DEMO)await loadAll();
+  toast(`Imported ${ok} projects${fail?`, ${fail} failed`:''}!`,'success');nav('dashboard');
+}
+
+// OFFER UPLOAD
+async function handleOfferFile(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.name.toLowerCase().endsWith('.pdf')){
+    showL('Reading PDF...');
+    try{
+      if(!window.pdfjsLib){
+        await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+      const ab=await file.arrayBuffer();
+      const pdf=await window.pdfjsLib.getDocument({data:ab}).promise;
+      let txt='';
+      for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();txt+=tc.items.map(it=>it.str).join(' ')+'\n';}
+      document.getElementById('offer-text').value=txt.trim();
+      toast('PDF read - '+pdf.numPages+' page(s) extracted','success');
+    }catch(err){toast('PDF error: '+err.message,'error')}
+    finally{hideL()}
+  } else {
+    const r=new FileReader();r.onload=ev=>{document.getElementById('offer-text').value=ev.target.result;toast(file.name+' loaded','success')};r.readAsText(file);
+  }
+}
+async function extractOffer(){
+  const text=document.getElementById('offer-text').value.trim();
+  if(!text){toast('Paste offer text first','error');return}
+  if(!AI_KEY){toast('Add Anthropic API key in Setup','error');return}
+  showL('Extracting fields...');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AI_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:'Extract structured data from offer text. Respond ONLY with valid JSON, nothing else.',messages:[{role:'user',content:`Extract and return ONLY this JSON:\n{"supplier":"","currency":"EUR","total_price":null,"day_rate":null,"project_days":null,"start_date":"","end_date":"","scope":""}\n\nOffer:\n${text.substring(0,3000)}`}]})});
+    const d=await res.json();const raw=d.content?.map(b=>b.text||'').join('')||'{}';
+    let parsed;try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim())}catch{parsed={}}
+    if(parsed.supplier)document.getElementById('of-sup').value=parsed.supplier;
+    if(parsed.total_price)document.getElementById('of-total').value=parsed.total_price;
+    if(parsed.currency)document.getElementById('of-cur').value=parsed.currency;
+    if(parsed.day_rate)document.getElementById('of-dr').value=parsed.day_rate;
+    if(parsed.project_days)document.getElementById('of-days').value=parsed.project_days;
+    if(parsed.start_date)document.getElementById('of-start').value=parsed.start_date;
+    if(parsed.scope)document.getElementById('of-scope').value=parsed.scope;
+    document.getElementById('offer-ext').style.display='block';
+    document.getElementById('offer-assign').style.display='block';
+    if(parsed.total_price&&AI_KEY){
+      const ib=document.getElementById('offer-insight');const it=document.getElementById('offer-ins-text');
+      ib.style.display='block';
+      await streamClaude(`${document.getElementById('offer-type').value}: ${parsed.scope||'procurement'}. Total: ${parsed.total_price} ${parsed.currency||'EUR'}, Day rate: ${parsed.day_rate||'N/A'}, Days: ${parsed.project_days||'N/A'}. Is this market-rate? Best negotiation lever? 2 sentences.`,it,'You are a procurement expert. Direct and specific.');
+    }
+    toast('Fields extracted ✓ — now assign to a project below','success');
+  }catch(e){toast('Error: '+e.message,'error')}
+  finally{hideL()}
+}
+// toggle existing/new project mode
+function toggleProjMode(mode){
+  document.getElementById('proj-existing-block').style.display=mode==='existing'?'block':'none';
+  document.getElementById('proj-new-block').style.display=mode==='new'?'block':'none';
+  document.getElementById('tog-existing').className='btn btn-sm '+(mode==='existing'?'btn-primary':'btn-ghost');
+  document.getElementById('tog-new').className='btn btn-sm '+(mode==='new'?'btn-primary':'btn-ghost');
+}
+
+async function saveOffer(){
+  if(!TOKEN&&!DEMO){toast('Connect Airtable first','error');return}
+  const isNew=document.getElementById('proj-new-block').style.display!=='none';
+  let pid='';
+  if(isNew){
+    // create project first
+    const pname=document.getElementById('new-proj-name').value.trim();
+    if(!pname){toast('Enter a project name','error');return}
+    const pfields={'Project Title':pname,'Category':document.getElementById('new-proj-cat').value||undefined,'Region':document.getElementById('new-proj-region').value||undefined,'Status':document.getElementById('new-proj-status').value,'Initial Offer Total':parseFloat(document.getElementById('of-total').value)||undefined};
+    Object.keys(pfields).forEach(k=>pfields[k]===undefined&&delete pfields[k]);
+    showL('Creating project...');
+    try{
+      if(DEMO){const np={id:'p_'+Date.now(),...pfields};DB.projects.push(np);pid=np.id}
+      else{const r=await atCreate('Saving Project',pfields);pid=r.id}
+    }catch(e){toast('Project error: '+e.message,'error');hideL();return}
+  } else {
+    pid=document.getElementById('offer-project').value;
+    if(!pid){toast('Select a project','error');return}
+  }
+  const fields={'Offer Type':document.getElementById('offer-type').value,'Supplier':document.getElementById('of-sup').value||undefined,'Total Price':parseFloat(document.getElementById('of-total').value)||undefined,'Currency':document.getElementById('of-cur').value||'EUR','Day Rate':parseFloat(document.getElementById('of-dr').value)||undefined,'Project Days':parseFloat(document.getElementById('of-days').value)||undefined,'Scope':document.getElementById('of-scope').value||undefined,'Saving Project':[pid]};
+  Object.keys(fields).forEach(k=>fields[k]===undefined&&delete fields[k]);
+  showL('Saving offer...');
+  try{
+    if(DEMO)DB.offers.push({id:'o_'+Date.now(),...fields});
+    else await atCreate('Offer',fields);
+    if(!DEMO)await loadAll();
+    else fillSels();
+    toast('Offer saved ✓','success');
+    // reset form
+    document.getElementById('offer-text').value='';
+    document.getElementById('offer-ext').style.display='none';
+    document.getElementById('offer-assign').style.display='none';
+    nav('rfq');
+  }catch(e){toast('Error: '+e.message,'error')}finally{hideL()}
+}
+
+// RFQ DASHBOARD
+function renderRFQ(){
+  const projects=DB.projects;
+  const offers=DB.offers;
+  // KPIs
+  const active=projects.filter(p=>gf(p,'Status')==='In Negotiation').length;
+  const pending=projects.filter(p=>{
+    const po=offers.filter(o=>{const l=o['Saving Project'];return l&&(Array.isArray(l)?l.includes(p.id):l===p.id)});
+    return po.length===1&&po[0]['Offer Type']==='First Offer';
+  }).length;
+  const closed=projects.filter(p=>gf(p,'Status')==='Closed').length;
+  let potential=0;
+  projects.forEach(p=>{
+    const ini=parseFloat(gf(p,'Initial Offer Total')||0);
+    const fin=parseFloat(gf(p,'Final Offer Total')||0);
+    if(ini&&!fin)potential+=ini*0.15; // estimate 15% if not closed
+    else if(ini&&fin)potential+=ini-fin;
+  });
+  document.getElementById('rfq-active').textContent=active||'0';
+  document.getElementById('rfq-pending').textContent=pending||'0';
+  document.getElementById('rfq-potential').textContent=fmt(potential)||'–';
+  document.getElementById('rfq-closed').textContent=closed||'0';
+
+  if(!projects.length){
+    document.getElementById('rfq-content').innerHTML=`<div style="text-align:center;padding:3rem;color:var(--slate)">
+      <div style="font-size:2.5rem;margin-bottom:1rem">📭</div>
+      <div style="font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:var(--text)">No offers yet</div>
+      <div style="font-size:.83rem;margin-bottom:1.5rem">Upload your first offer to start tracking negotiations</div>
+      <button class="btn btn-primary" onclick="nav('offer-upload')">+ Upload First Offer</button>
+    </div>`;return;
+  }
+
+  // Group offers by project
+  const html=projects.map(p=>{
+    const pid=p.id;
+    const pname=gf(p,'Project Title','Project Name','Name','Title')||'Untitled Project';
+    const status=gf(p,'Status')||'Draft';
+    const po=offers.filter(o=>{const l=o['Saving Project'];return l&&(Array.isArray(l)?l.includes(pid):l===pid||l===pname)});
+    const first=po.find(o=>(gf(o,'Offer Type','Type')||'').includes('First')||(gf(o,'Offer Type','Type')||'').includes('Initial'));
+    const counter=po.find(o=>(gf(o,'Offer Type','Type')||'').includes('Counter')||(gf(o,'Offer Type','Type')||'').includes('Mid'));
+    const final=po.find(o=>(gf(o,'Offer Type','Type')||'').includes('Final'));
+    const ini=parseFloat(gf(p,'Initial Offer Total')||gf(first,'Total Price')||0);
+    const fin=parseFloat(gf(p,'Final Offer Total')||gf(final,'Total Price')||0);
+    const sav=fin&&ini?ini-fin:null;
+    const savPct=sav&&ini?(sav/ini*100):null;
+    const awaiting=po.length===1&&!!first;
+
+    return`<div class="card" style="margin-bottom:1rem">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <div style="font-size:.93rem;font-weight:800;color:var(--text);letter-spacing:-.02em;margin-bottom:.3rem">${pname}</div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            ${sbadge(status)}
+            <span class="badge bm">${gf(p,'Category','Service Type')||'–'}</span>
+            ${awaiting?'<span class="badge ba">⏳ Awaiting response</span>':''}
+            ${sav&&sav>0?`<span class="badge bg">✓ ${fmtP(savPct)} saved</span>`:''}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('offer-upload');setTimeout(()=>{document.getElementById('offer-project').value='${pid}'},100)">+ Add Counter Offer</button>
+      </div>
+
+      <!-- Offer timeline -->
+      <div style="display:flex;align-items:stretch;gap:0;margin-bottom:${sav?'1rem':'0'}">
+        ${offerStep('First Offer',first,ini,'var(--amber)')}
+        ${po.length>0?'<div style="display:flex;align-items:center;padding:0 .4rem;color:var(--slate3);font-size:1.1rem">→</div>':''}
+        ${offerStep('Counter Offer',counter,null,'var(--blue3)')}
+        ${po.length>1?'<div style="display:flex;align-items:center;padding:0 .4rem;color:var(--slate3);font-size:1.1rem">→</div>':''}
+        ${offerStep('Final Offer',final,fin,'var(--green)')}
+      </div>
+
+      ${sav&&sav>0?`<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:.8rem;color:var(--green);font-weight:600">💰 Negotiated savings</span>
+        <span style="font-size:1.05rem;font-weight:800;color:var(--green)">${fmt(sav)} <span style="font-size:.8rem;font-weight:600">(${fmtP(savPct)})</span></span>
+      </div>`:''}
+      ${awaiting?`<div style="background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-top:.6rem">
+        <span style="font-size:.8rem;color:var(--amber);font-weight:600">⏳ Waiting for counter offer from supplier</span>
+        <button class="btn btn-sm" style="background:var(--amber-bg);border:1px solid #fde68a;color:var(--amber);font-weight:700" onclick="nav('offer-upload');setTimeout(()=>{document.getElementById('offer-project').value='${pid}';document.getElementById('offer-type').value='Counter Offer'},100)">Add counter offer</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('rfq-content').innerHTML=html;
+}
+
+function offerStep(label,offer,fallbackAmt,color){
+  const has=!!offer;
+  const amt=has?parseFloat(gf(offer,'Total Price')||0):fallbackAmt;
+  const sup=has?gf(offer,'Supplier','supplier_name')||'':'' ;
+  return`<div style="flex:1;min-width:110px;background:${has?'#fff':'var(--off)'};border:1.5px solid ${has?color:'var(--border)'};border-radius:10px;padding:.9rem;opacity:${has?1:.45}">
+    <div style="font-size:.6rem;font-weight:700;color:${has?color:'var(--slate2)'};text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem">${label}</div>
+    <div style="font-size:1.1rem;font-weight:800;color:${has?'var(--text)':'var(--slate2)'};letter-spacing:-.03em">${has&&amt?fmt(amt):'–'}</div>
+    ${sup?`<div style="font-size:.7rem;color:var(--slate);margin-top:.2rem">${sup}</div>`:''}
+  </div>`;
+}
+
+// OPPORTUNITIES
+async function renderOpps(){if(!OPPS.length)await runOpps()}
+async function runOpps(){
+  if(!AI_KEY){document.getElementById('opp-sum').textContent='Add Anthropic API key in Setup.';return}
+  const out=document.getElementById('opp-sum');out.textContent='Analyzing...';out.classList.add('streaming');
+  const s=DB.projects.slice(0,15).map(p=>`${gf(p,'Project Title','Name')||'?'} | ${gf(p,'Category')||'?'} | Initial: ${gf(p,'Initial Offer Total')||'?'} | Final: ${gf(p,'Final Offer Total')||'?'} | Savings: ${gf(p,'Savings €')||'?'} | Status: ${gf(p,'Status')||'?'}`).join('\n');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AI_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:'Senior procurement analyst. JSON array first, then summary.',messages:[{role:'user',content:`Analyze ${DB.projects.length} projects, identify opportunities.\n${s}\nReturn JSON array (max 6):\n[{"title":"","description":"","estimated_savings":"€X–€Y","priority":"high|medium|low","category":"","action":""}]\nThen 2-sentence executive summary.`}]})});
+    const d=await res.json();const text=d.content?.map(b=>b.text||'').join('')||'';
+    const jm=text.match(/\[[\s\S]*?\]/);
+    if(jm){try{OPPS=JSON.parse(jm[0]);document.getElementById('ogrid').innerHTML=OPPS.map(o=>`<div class="ocard ${o.priority}"><div class="o-title">${o.title}</div><div class="o-desc">${o.description}</div><div style="font-size:.7rem;color:var(--slate);margin-bottom:.75rem">📁 ${o.category} · ${o.action}</div><div class="o-foot"><span class="o-save">${o.estimated_savings}</span><span class="badge ${o.priority==='high'?'bb':o.priority==='medium'?'ba':'bm'}">${o.priority}</span></div></div>`).join('')}catch{OPPS=[]}}
+    const sum=text.replace(/\[[\s\S]*?\]/,'').trim();
+    out.classList.remove('streaming');out.textContent=sum||`Found ${OPPS.length} opportunities.`;
+    document.getElementById('k-opps').textContent=OPPS.length;
+    document.getElementById('ai-banner').style.display='block';
+    document.getElementById('ai-banner-text').textContent=sum||`AI identified ${OPPS.length} opportunities.`;
+  }catch(e){out.classList.remove('streaming');out.textContent='Error: '+e.message}
+}
+
+// AI COACH
+function fillSels(){
+  const opts='<option value="">– Select –</option>'+DB.projects.map(p=>`<option value="${p.id}">${gf(p,'Project Title','Project Name','Name','Title')||p.id}</option>`).join('');
+  ['ai-bm','ai-neg','ai-sav','offer-project'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts});
+}
+async function aiAct(type){
+  const sm={'benchmark':'ai-bm','negotiation':'ai-neg','savings':'ai-sav'};
+  const om={'benchmark':'ao-bm','negotiation':'ao-neg','savings':'ao-sav','learn':'ao-learn'};
+  const out=document.getElementById(om[type]);
+  if(!AI_KEY){out.textContent='Add Anthropic API key in Setup.';return}
+  let prompt='';
+  if(type!=='learn'){
+    const id=document.getElementById(sm[type])?.value;if(!id){out.textContent='Select a project.';return}
+    const p=DB.projects.find(x=>x.id===id);if(!p)return;
+    const data=`${gf(p,'Project Title','Name')} | ${gf(p,'Category')||'?'} | ${gf(p,'Region')||'?'} | Initial: ${gf(p,'Initial Offer Total')||'?'} | Final: ${gf(p,'Final Offer Total')||'?'} | Savings: ${gf(p,'Savings €')||'?'} (${gf(p,'Savings %')||'?'}%) | P25: ${gf(p,'Benchmark P25')||'?'} | Median: ${gf(p,'Benchmark Median')||'?'} | P75: ${gf(p,'Benchmark P75')||'?'}`;
+    if(type==='benchmark')prompt=`Benchmark analysis: ${data}\nPosition vs P25/Median/P75 and negotiation headroom. 200 words max.`;
+    if(type==='negotiation')prompt=`Negotiation strategy for: ${data}\n3-4 concrete tactics with specific arguments and target prices. 250 words max.`;
+    if(type==='savings')prompt=`Savings potential for: ${data}\n1) Realized 2) Remaining 3) Recommended target. 200 words max.`;
+  }else{
+    const s=DB.projects.slice(0,10).map(p=>`${gf(p,'Project Title','Name')||'?'}: ${gf(p,'Initial Offer Total')||'?'} → ${gf(p,'Final Offer Total')||'?'} = ${gf(p,'Savings €')||'?'} (${gf(p,'Savings %')||'?'}%)`).join('\n');
+    prompt=`Analyze ${DB.projects.length} negotiation outcomes:\n${s}\nPatterns? What worked? Key learnings? 300 words max.`;
+  }
+  await streamClaude(prompt,out,'You are a senior procurement expert. Be concise and actionable.');
+}
+async function aiDetailIns(id){
+  const p=DB.projects.find(x=>x.id===id);if(!p||!AI_KEY)return;
+  const box=document.getElementById('d-ai-box');const out=document.getElementById('d-ai-txt');
+  box.style.display='block';
+  await streamClaude(`Strategy for: ${gf(p,'Project Title','Name')} | ${gf(p,'Category')||'?'} | Initial: ${gf(p,'Initial Offer Total')||'?'} | Final: ${gf(p,'Final Offer Total')||'?'} | Benchmark Median: ${gf(p,'Benchmark Median')||'?'}\n3 specific recommendations. 150 words max.`,out,'You are a procurement expert. Direct and specific.');
+}
+
+// STREAM AI
+async function streamClaude(prompt,outEl,system='You are a helpful procurement expert.'){
+  if(!AI_KEY){outEl.textContent='Add Anthropic API key in Setup.';return}
+  outEl.textContent='';outEl.classList.add('streaming');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AI_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:[{role:'user',content:prompt}]})});
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`)}
+    const d=await res.json();const text=d.content?.map(b=>b.text||'').join('')||'';
+    outEl.classList.remove('streaming');
+    outEl.textContent='';let i=0;
+    const type=()=>{if(i<text.length){outEl.textContent+=text[i++];if(i<text.length)requestAnimationFrame(type)}};type();
+  }catch(e){outEl.classList.remove('streaming');outEl.textContent='Error: '+e.message}
+}
+
+// DRAG DROP
+const cd=document.getElementById('csv-drop');
+cd.addEventListener('dragover',e=>{e.preventDefault();cd.classList.add('drag')});
+cd.addEventListener('dragleave',()=>cd.classList.remove('drag'));
+cd.addEventListener('drop',e=>{e.preventDefault();cd.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handleCSV({target:{files:[f]}})});
+</script>
+</body>
+</html>
