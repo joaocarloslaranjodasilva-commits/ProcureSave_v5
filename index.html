@@ -869,7 +869,6 @@ function toggleProjMode(mode){
 }
 
 async function saveOffer(){
-  if(!TOKEN&&!DEMO){toast('Connect Airtable first','error');return}
   const isNew=document.getElementById('proj-new-block').style.display!=='none';
   let pid='';
   if(isNew){
@@ -880,7 +879,7 @@ async function saveOffer(){
     Object.keys(pfields).forEach(k=>pfields[k]===undefined&&delete pfields[k]);
     showL('Creating project...');
     try{
-      if(DEMO){const np={id:'p_'+Date.now(),...pfields};DB.projects.push(np);pid=np.id}
+      if(DEMO||!TOKEN){const np={id:'p_'+Date.now(),...pfields};DB.projects.push(np);pid=np.id;fillSels()}
       else{const r=await atCreate('Saving Project',pfields);pid=r.id}
     }catch(e){toast('Project error: '+e.message,'error');hideL();return}
   } else {
@@ -891,10 +890,9 @@ async function saveOffer(){
   Object.keys(fields).forEach(k=>fields[k]===undefined&&delete fields[k]);
   showL('Saving offer...');
   try{
-    if(DEMO)DB.offers.push({id:'o_'+Date.now(),...fields});
-    else await atCreate('Offer',fields);
-    if(!DEMO)await loadAll();
-    else fillSels();
+    if(DEMO||!TOKEN)DB.offers.push({id:'o_'+Date.now(),...fields});
+    else{await atCreate('Offer',fields);await loadAll();}
+    fillSels();
     toast('Offer saved ✓','success');
     // reset form
     document.getElementById('offer-text').value='';
