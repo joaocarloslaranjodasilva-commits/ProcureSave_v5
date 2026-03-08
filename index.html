@@ -445,7 +445,7 @@ tbody tr:hover td{background:var(--sky-dim)}
         <div><div class="st">Saving Projects</div><div class="st-sub">All procurement negotiations</div></div>
         <div style="display:flex;gap:.5rem;align-items:center">
           <input type="text" id="proj-search" placeholder="Search projects..." style="width:200px;font-size:.78rem;padding:7px 11px"/>
-          <button class="btn btn-primary btn-sm" onclick="nav('offer-upload')">+ New Project</button>
+          <button class="btn btn-primary btn-sm" onclick="openNewProjectModal()">+ New Project</button>
         </div>
       </div>
       <div class="tw">
@@ -1166,6 +1166,56 @@ function renderOffers(){
 
 // ── PROJECT MODAL (from All Offers) ──
 let MODAL_OFFER_ID = '';
+function openNewProjectModal(){
+  MODAL_OFFER_ID=''; // no offer attached
+  const titleEl=document.getElementById('modal-title');
+  if(titleEl)titleEl.innerHTML='+ New Saving Project';
+  document.getElementById('modal-offer-info').innerHTML=
+    '<span style="color:var(--ink3);font-size:.78rem">Create a project manually — attach offers later from All Offers</span>';
+  // Clear all fields
+  const sv=(id,val='')=>{const el=document.getElementById(id);if(el)el.value=val};
+  sv('mp-title');sv('mp-subcat');sv('mp-matgrp');sv('mp-baseline');sv('mp-init-offer');
+  sv('mp-costsaving');sv('mp-costavoid');sv('mp-desc');sv('mp-sstart');sv('mp-send');
+  sv('mp-complex');sv('mp-unit');sv('mp-tender');sv('mp-ei');sv('mp-po');sv('mp-opp');
+  sv('mp-region');sv('mp-status','Pipeline');sv('mp-cat');
+  // Fill company dropdown
+  const mpco=document.getElementById('mp-company');
+  mpco.innerHTML='<option value="">– Select –</option>'+DB.companies.map(c=>`<option value="${c.id}">${gf(c,'Company Name','Name')}</option>`).join('');
+  if(DB.companies.length===1)mpco.value=DB.companies[0].id;
+  // Hide existing toggle (no offer to assign)
+  toggleModalMode('new');
+  document.getElementById('mtog-existing').style.display='none';
+  document.getElementById('mtog-new').style.display='none';
+  document.getElementById('modal-status').className='sm';
+  document.getElementById('modal-status').innerHTML='';
+  // Change button text
+  const btn=document.querySelector('#proj-modal-overlay .btn-primary:last-of-type');
+  if(btn)btn.textContent='💾 Create Project';
+  document.getElementById('proj-modal-overlay').style.display='flex';
+}
+
+function openNewProjectModal(){
+  MODAL_OFFER_ID='';
+  const titleEl=document.getElementById('modal-title');
+  if(titleEl)titleEl.innerHTML='+ New Saving Project';
+  document.getElementById('modal-offer-info').innerHTML=
+    '<span style="color:var(--ink3);font-size:.78rem">Create a project manually — attach offers later from All Offers</span>';
+  const sv=(id,val='')=>{const el=document.getElementById(id);if(el)el.value=val};
+  sv('mp-title');sv('mp-subcat');sv('mp-matgrp');sv('mp-baseline');sv('mp-init-offer');
+  sv('mp-costsaving');sv('mp-costavoid');sv('mp-desc');sv('mp-sstart');sv('mp-send');
+  sv('mp-complex');sv('mp-unit');sv('mp-tender');sv('mp-ei');sv('mp-po');sv('mp-opp');
+  sv('mp-region');sv('mp-status','Pipeline');sv('mp-cat');
+  const mpco=document.getElementById('mp-company');
+  mpco.innerHTML='<option value="">– Select –</option>'+DB.companies.map(c=>`<option value="${c.id}">${gf(c,'Company Name','Name')}</option>`).join('');
+  if(DB.companies.length===1)mpco.value=DB.companies[0].id;
+  toggleModalMode('new');
+  document.getElementById('mtog-existing').style.display='none';
+  document.getElementById('mtog-new').style.display='none';
+  document.getElementById('modal-status').className='sm';
+  document.getElementById('modal-status').innerHTML='';
+  document.getElementById('proj-modal-overlay').style.display='flex';
+}
+
 function openProjModal(offerId, fromUpload=false){
   MODAL_OFFER_ID=offerId;
   const o=DB.offers.find(x=>x.id===offerId);
@@ -1228,6 +1278,8 @@ function openProjModal(offerId, fromUpload=false){
 function closeProjModal(e){
   if(e&&e.target!==document.getElementById('proj-modal-overlay'))return;
   document.getElementById('proj-modal-overlay').style.display='none';
+  document.getElementById('mtog-existing').style.display='';
+  document.getElementById('mtog-new').style.display='';
 }
 function toggleModalMode(mode){
   const isNew=mode==='new';
@@ -1289,21 +1341,28 @@ async function saveFromModal(){
       pid=document.getElementById('modal-proj-select').value;
       if(!pid){setSt('modal-status','error','Select a project');return}
     }
-    // Now link offer → project
-    if(DEMO||!TOKEN){
-      o['Saving Project']=pid;
-    }else{
-      await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${o.id}`,{
-        method:'PATCH',
-        headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},
-        body:JSON.stringify({fields:{'Saving Project':pid}})
-      });
-      o['Saving Project']=pid; // update local cache
+    // Link offer → project (only if an offer was selected)
+    if(MODAL_OFFER_ID&&o){
+      if(DEMO||!TOKEN){
+        o['Saving Project']=pid;
+      }else{
+        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${o.id}`,{
+          method:'PATCH',
+          headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},
+          body:JSON.stringify({fields:{'Saving Project':pid}})
+        });
+        o['Saving Project']=pid;
+        await loadAll();
+      }
+    } else if(!DEMO&&TOKEN){
       await loadAll();
     }
     document.getElementById('proj-modal-overlay').style.display='none';
-    toast('Offer linked to project ✓','success');
-    renderOffers();
+    // Reset toggle buttons visibility
+    document.getElementById('mtog-existing').style.display='';
+    document.getElementById('mtog-new').style.display='';
+    toast(MODAL_OFFER_ID?'Offer linked to project ✓':'Project created ✓','success');
+    if(MODAL_OFFER_ID) renderOffers(); else renderProjs();
   }catch(e){setSt('modal-status','error',e.message)}
 }
 
@@ -1558,41 +1617,6 @@ function resetOfferForm(){
   document.getElementById('offer-text').value='';
   document.getElementById('offer-ext').style.display='none';
   document.getElementById('offer-assign').style.display='none';
-}
-
-// ── DELETE ──
-async function deleteRecord(type, id, e){
-  if(e)e.stopPropagation();
-  const label=type==='project'?'project (and all linked offers)':'offer';
-  if(!confirm(`Delete this ${label}? This cannot be undone.`))return;
-  if(type==='project'){
-    if(TOKEN&&!DEMO){
-      try{
-        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Saving Project')}/${id}`,
-          {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}});
-        // Also delete linked offers from Airtable
-        const linked=DB.offers.filter(o=>{const p=o['Saving Project'];return Array.isArray(p)?p.includes(id):p===id});
-        await Promise.all(linked.map(o=>
-          fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${o.id}`,
-            {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}})
-        ));
-      }catch(err){toast('Delete failed: '+err.message,'error');return}
-    }
-    DB.projects=DB.projects.filter(p=>p.id!==id);
-    DB.offers=DB.offers.filter(o=>{const p=o['Saving Project'];return Array.isArray(p)?!p.includes(id):p!==id});
-    renderProjs();
-    toast('Project deleted','');
-  } else {
-    if(TOKEN&&!DEMO){
-      try{
-        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${id}`,
-          {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}});
-      }catch(err){toast('Delete failed: '+err.message,'error');return}
-    }
-    DB.offers=DB.offers.filter(o=>o.id!==id);
-    renderOffers();
-    toast('Offer deleted','');
-  }
 }
 
 // ── DELETE ──
