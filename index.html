@@ -686,30 +686,98 @@ async function atCreate(tbl,fields){
   if(!r.ok)throw new Error(await r.text());return r.json();
 }
 
-// ── SCHEMA ──
+// ── SCHEMA (full — field types + choices + linked tables) ──
+// SCHEMA_FULL[tableName][fieldName] = { type, choices, linkedTableId }
+let SCHEMA_FULL = {};
+
 async function loadSchema(){
   try{
     const r=await fetch(`https://api.airtable.com/v0/meta/bases/${BASE_ID}/tables`,{headers:{Authorization:`Bearer ${TOKEN}`}});
     if(!r.ok)return;
     const d=await r.json();
-    for(const tbl of(d.tables||[])){
-      SCHEMA[tbl.name]={};
+    const tables=d.tables||[];
+    // Build table ID → name map
+    const tblById={};
+    tables.forEach(t=>tblById[t.id]=t.name);
+    // Store full field metadata
+    for(const tbl of tables){
+      SCHEMA[tbl.name]={};       // choices only (for dropdowns)
+      SCHEMA_FULL[tbl.name]={};  // full type info
       for(const f of(tbl.fields||[])){
-        if(f.options?.choices)SCHEMA[tbl.name][f.name]=f.options.choices.map(c=>c.name);
+        const meta={type:f.type};
+        if(f.options?.choices) meta.choices=f.options.choices.map(c=>c.name);
+        if(f.options?.linkedTableId) meta.linkedTable=tblById[f.options.linkedTableId]||f.options.linkedTableId;
+        SCHEMA_FULL[tbl.name][f.name]=meta;
+        if(meta.choices) SCHEMA[tbl.name][f.name]=meta.choices;
       }
     }
     applySchemaDropdowns();
+    console.log('Schema loaded:', Object.keys(SCHEMA_FULL));
   }catch(e){console.warn('Schema:',e)}
 }
+
 function applySchemaDropdowns(){
   const sp=SCHEMA['Saving Project']||{};
-  const map={'new-proj-status':sp['Status'],'new-proj-cat':sp['Category'],'new-proj-region':sp['Supplier Region'],'new-proj-complex':sp['Complexity'],'new-proj-tender':sp['Tender'],'new-proj-ei':sp['Early Involvement'],'offer-type':(SCHEMA['Offer']||{})['Offer Type']};
+  const so=SCHEMA['Offer']||{};
+  const map={
+    'new-proj-status': sp['Status'],
+    'new-proj-cat':    sp['Category'],
+    'new-proj-region': sp['Supplier Region'],
+    'new-proj-complex':sp['Complexity'],
+    'new-proj-tender': sp['Tender'],
+    'new-proj-ei':     sp['Early Involvement'],
+    'offer-type':      so['Offer Type'],
+    'of-cur':          so['Currency'],
+  };
   for(const[id,opts]of Object.entries(map)){
     const el=document.getElementById(id);
     if(!el||!opts?.length)continue;
-    if(el.tagName==='SELECT'){el.innerHTML='<option value="">– Select –</option>'+opts.map(o=>`<option value="${o}">${o}</option>`).join('')}
-    else{const s=document.createElement('select');s.id=id;s.innerHTML='<option value="">– Select –</option>'+opts.map(o=>`<option value="${o}">${o}</option>`).join('');el.replaceWith(s)}
+    if(el.tagName==='SELECT'){
+      el.innerHTML='<option value="">– Select –</option>'+opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+    }else{
+      const s=document.createElement('select');s.id=id;
+      s.innerHTML='<option value="">– Select –</option>'+opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+      el.replaceWith(s);
+    }
   }
+}
+
+// ── SMART SAVE — automatically formats fields based on Airtable schema ──
+// No more manual hardcoding of field types!
+function smartFields(tableName, rawFields){
+  const tblSchema=SCHEMA_FULL[tableName]||{};
+  const out={};
+  for(const[key,val]of Object.entries(rawFields)){
+    if(val===undefined||val===null||val==='')continue;
+    const meta=tblSchema[key];
+    if(!meta){
+      // Unknown field — send as-is
+      out[key]=val;continue;
+    }
+    if(meta.type==='multipleRecordLinks'){
+      // Must be array of record IDs
+      if(Array.isArray(val))out[key]=val;
+      else if(typeof val==='string'&&val.startsWith('rec'))out[key]=[val];
+      else out[key]=[val]; // best effort
+    } else if(meta.type==='number'||meta.type==='currency'||meta.type==='percent'){
+      const n=parseFloat(val);
+      if(!isNaN(n))out[key]=n;
+    } else if(meta.type==='checkbox'){
+      out[key]=!!val;
+    } else if(meta.type==='formula'||meta.type==='rollup'||meta.type==='count'||meta.type==='autoNumber'||meta.type==='createdTime'||meta.type==='lastModifiedTime'){
+      // Read-only — skip
+    } else {
+      // text, singleSelect, email, date, url, etc.
+      out[key]=String(val);
+    }
+  }
+  return out;
+}
+
+async function atCreateSmart(tbl, rawFields){
+  const fields=smartFields(tbl, rawFields);
+  console.log(`Saving to ${tbl}:`, fields);
+  return atCreate(tbl, fields);
 }
 
 // ── CONNECT ──
@@ -739,11 +807,11 @@ function demoMode(){
     {id:'p6','Project Title':'Recruiting Platform License','Category':'Software','Supplier Region':'DACH','Status':'In Progress','Initial Offer Total':68000,'Final Offer Total':null,'Cost saving':null,'Total savings %':null,'Benchmark Median':52000},
   ];
   DB.offers=[
-    {id:'o1','Saving Project':['p1'],'Offer Type':'1st Offer','Supplier':'TechCorp GmbH','Total Price':280000,'Project Currency':'EUR','Day Rate':1400,'Project Days':200},
-    {id:'o2','Saving Project':['p1'],'Offer Type':'Rebid','Supplier':'TechCorp GmbH','Total Price':245000,'Project Currency':'EUR','Day Rate':1225,'Project Days':200},
-    {id:'o3','Saving Project':['p1'],'Offer Type':'Final Offer','Supplier':'TechCorp GmbH','Total Price':218000,'Project Currency':'EUR','Day Rate':1090,'Project Days':200},
-    {id:'o4','Saving Project':['p2'],'Offer Type':'1st Offer','Supplier':'Publicis Media','Total Price':120000,'Project Currency':'EUR'},
-    {id:'o5','Saving Project':['p6'],'Offer Type':'1st Offer','Supplier':'Workday','Total Price':68000,'Project Currency':'EUR'},
+    {id:'o1','Saving Project':'p1','Offer Type':'1st Offer','Scope Extract':'TechCorp GmbH','Total Price':280000,'Currency':'EUR'},
+    {id:'o2','Saving Project':'p1','Offer Type':'Rebid','Scope Extract':'TechCorp GmbH','Total Price':245000,'Currency':'EUR'},
+    {id:'o3','Saving Project':'p1','Offer Type':'Final Offer','Scope Extract':'TechCorp GmbH','Total Price':218000,'Currency':'EUR'},
+    {id:'o4','Saving Project':'p2','Offer Type':'1st Offer','Scope Extract':'Publicis Media','Total Price':120000,'Currency':'EUR'},
+    {id:'o5','Saving Project':'p6','Offer Type':'1st Offer','Scope Extract':'Workday','Total Price':68000,'Currency':'EUR'},
   ];
   DB.companies=[{id:'c1','Company Name':'AutoScout24 GmbH'}];
   DB.users=[{id:'u1','Name':'Joao Carlos'}];
@@ -912,7 +980,7 @@ function showDetail(id){
     return`<div class="offer-step ${col}">
       <div class="offer-step-label">${otype}</div>
       <div class="offer-step-val">${fmt(gf(o,'Total Price'))}</div>
-      <div class="offer-step-sup">${gf(o,'Supplier')||''} ${gf(o,'Day Rate')?'· €'+gf(o,'Day Rate')+'/day':''}</div>
+      <div class="offer-step-sup">${(gf(o,'Scope Extract')||'').split('\n')[0]||''} ${gf(o,'Day Rate')?'· €'+gf(o,'Day Rate')+'/day':''}</div>
     </div>`;
   }).join('<div style="display:flex;align-items:center;padding:0 .4rem;color:var(--line2);font-size:1.2rem;flex-shrink:0">→</div>');
 
@@ -957,12 +1025,12 @@ function showDetail(id){
 function renderOffers(){
   document.getElementById('offers-tbody').innerHTML=DB.offers.map(o=>{
     const pid=o['Saving Project'];
-    const proj=DB.projects.find(p=>p.id===pid);
+    const proj=DB.projects.find(p=>p.id===pid||gf(p,'Project Title','Name')===pid);
     const pname=proj?gf(proj,'Project Title','Name'):'–';
     return`<tr>
       <td style="font-weight:600">${pname}</td>
       <td>${sbadge(gf(o,'Offer Type'))}</td>
-      <td>${gf(o,'Supplier')||'–'}</td>
+      <td>${(gf(o,'Scope Extract')||'').split('\n')[0]||'–'}</td>
       <td class="td-num td-b">${fmt(gf(o,'Total Price'))}</td>
       <td class="td-num">${gf(o,'Day Rate')?'€'+gf(o,'Day Rate'):'–'}</td>
       <td class="td-num">${gf(o,'Project Days')||'–'}</td>
@@ -985,7 +1053,7 @@ function renderRFQ(){
   if(!ps.length){document.getElementById('rfq-content').innerHTML=`<div style="text-align:center;padding:3rem;color:var(--ink3)"><div style="font-size:2rem;margin-bottom:.75rem">📭</div><div style="font-weight:700;color:var(--ink);margin-bottom:.4rem">No negotiations yet</div><div style="font-size:.82rem;margin-bottom:1.2rem;font-weight:300">Upload your first offer to start tracking</div><button class="btn btn-primary" onclick="nav('offer-upload')">+ Upload First Offer</button></div>`;return;}
   document.getElementById('rfq-content').innerHTML=ps.map(p=>{
     const pid=p.id,pname=gf(p,'Project Title','Name')||'Untitled';
-    const po=os.filter(o=>{const l=o['Saving Project'];return l&&(Array.isArray(l)?l.includes(pid):l===pid||l===pname)});
+    const po=os.filter(o=>o['Saving Project']===pid||o['Saving Project']===pname);
     const first=po.find(o=>(gf(o,'Offer Type')||'')==='1st Offer');
     const counter=po.find(o=>(gf(o,'Offer Type')||'')==='Rebid');
     const final=po.find(o=>(gf(o,'Offer Type')||'')==='Final Offer');
@@ -997,7 +1065,7 @@ function renderRFQ(){
     const step=(label,offer,colClass)=>`<div class="offer-step ${offer?colClass:''}">
       <div class="offer-step-label">${label}</div>
       <div class="offer-step-val">${offer?fmt(gf(offer,'Total Price')):'–'}</div>
-      <div class="offer-step-sup">${offer?(gf(offer,'Supplier')||''):'not received'}</div>
+      <div class="offer-step-sup">${offer?((gf(offer,'Scope Extract')||'').split('\n')[0]||''):'not received'}</div>
     </div>`;
     return`<div class="rfq-card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;gap:.75rem;flex-wrap:wrap">
@@ -1101,23 +1169,42 @@ async function saveOffer(){
   if(isNew){
     const pname=document.getElementById('new-proj-name').value.trim();
     if(!pname){toast('Enter a project name','error');return}
-    const pfields={'Project Title':pname,'Category':document.getElementById('new-proj-cat')?.value||undefined,'Supplier Region':document.getElementById('new-proj-region')?.value||undefined,'Status':document.getElementById('new-proj-status')?.value||'In Negotiation','Complexity':document.getElementById('new-proj-complex')?.value||undefined,'Tender':document.getElementById('new-proj-tender')?.value||undefined,'Early Involvement':document.getElementById('new-proj-ei')?.value||undefined,'Initial Offer Total':parseFloat(document.getElementById('of-total').value)||undefined};
+    const pfields={
+      'Project Title':pname,
+      'Category':document.getElementById('new-proj-cat')?.value||undefined,
+      'Supplier Region':document.getElementById('new-proj-region')?.value||undefined,
+      'Status':document.getElementById('new-proj-status')?.value||'In Progress',
+      'Complexity':document.getElementById('new-proj-complex')?.value||undefined,
+      'Tender':document.getElementById('new-proj-tender')?.value||undefined,
+      'Early Involvement':document.getElementById('new-proj-ei')?.value||undefined,
+      'Initial Offer Total':parseFloat(document.getElementById('of-total').value)||undefined
+    };
     Object.keys(pfields).forEach(k=>{if(!pfields[k])delete pfields[k]});
     showL('Creating project...');
     try{
       if(DEMO||!TOKEN){const np={id:'p_'+Date.now(),...pfields};DB.projects.push(np);pid=np.id;fillSels()}
-      else{const r=await atCreate('Saving Project',pfields);pid=r.id;await loadAll();}
+      else{const r=await atCreateSmart('Saving Project',pfields);pid=r.id;await loadAll();}
     }catch(e){toast('Project error: '+e.message,'error');hideL();return}
   }else{
     pid=document.getElementById('offer-project').value;
     if(!pid){toast('Select a project','error');return}
   }
-  const fields={'Offer Type':document.getElementById('offer-type').value,'Supplier':document.getElementById('of-sup').value||undefined,'Total Price':parseFloat(document.getElementById('of-total').value)||undefined,'Currency':document.getElementById('of-cur').value||'EUR','Day Rate':parseFloat(document.getElementById('of-dr').value)||undefined,'Project Days':parseFloat(document.getElementById('of-days').value)||undefined,'Scope':document.getElementById('of-scope').value||undefined,'Saving Project':[pid]};
+  const supName=document.getElementById('of-sup').value||'';
+  const scopeText=document.getElementById('of-scope').value||'';
+  const scopeWithSup=supName?(supName+(scopeText?'\n'+scopeText:'')):scopeText;
+  const fields={
+    'Offer Type':document.getElementById('offer-type').value,
+    'Total Price':parseFloat(document.getElementById('of-total').value)||undefined,
+    'Currency':document.getElementById('of-cur').value||'EUR',
+    'Scope Extract':scopeWithSup||undefined,
+    'Saving Project':pid,
+    'Offer Date':document.getElementById('of-start').value||undefined,
+  };
   Object.keys(fields).forEach(k=>{if(fields[k]===undefined)delete fields[k]});
   showL('Saving offer...');
   try{
     if(DEMO||!TOKEN)DB.offers.push({id:'o_'+Date.now(),...fields});
-    else{await atCreate('Offer',fields);await loadAll();}
+    else{await atCreateSmart('Offer',fields);await loadAll();}
     fillSels();
     document.getElementById('offer-text').value='';
     document.getElementById('offer-ext').style.display='none';
@@ -1173,7 +1260,7 @@ async function importData(){
       for(const[k,v]of Object.entries(CSV_MAP)){if(v&&row[v]){const val=row[v];if(['Initial Offer Total','Final Offer Total','Cost saving','Total savings %'].includes(k)){const n=parseFloat(val.replace(/[^0-9.-]/g,''));if(!isNaN(n))fields[k]=n}else fields[k]=val}}
       if(!fields['Project Title'])continue;
       if(DEMO||!TOKEN)DB.projects.push({id:'p_csv_'+count,...fields});
-      else await atCreate('Saving Project',fields);
+      else await atCreateSmart('Saving Project',fields);
       count++;
     }
     if(!DEMO&&TOKEN)await loadAll();else fillSels();
