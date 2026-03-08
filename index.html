@@ -465,14 +465,82 @@ tbody tr:hover td{background:var(--sky-dim)}
     <!-- ALL OFFERS -->
     <div class="screen" id="screen-offers">
       <div class="sh">
-        <div><div class="st">All Offers</div><div class="st-sub">Complete negotiation history</div></div>
-        <button class="btn btn-primary btn-sm" onclick="nav('offer-upload')">+ Add Offer</button>
+        <div><div class="st">All Offers</div><div class="st-sub">Every uploaded offer — assign to a Saving Project anytime</div></div>
+        <button class="btn btn-primary btn-sm" onclick="nav('offer-upload')">+ Upload Offer</button>
       </div>
       <div class="tw">
         <table>
-          <thead><tr><th>Project</th><th>Stage</th><th>Supplier</th><th>Total Price</th><th>Day Rate</th><th>Days</th><th>Currency</th></tr></thead>
+          <thead><tr><th>Supplier</th><th>Company</th><th>Stage</th><th>Total Price</th><th>Day Rate</th><th>Currency</th><th>Date</th><th>Saving Project</th><th style="text-align:center">PDF</th><th></th></tr></thead>
           <tbody id="offers-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Project assign modal -->
+    <div id="proj-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:900;align-items:center;justify-content:center" onclick="closeProjModal(event)">
+      <div style="background:var(--surface);border-radius:16px;padding:2rem;width:min(680px,95vw);max-height:92vh;overflow-y:auto;position:relative" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
+          <div id="modal-title" style="font-weight:700;font-size:1.05rem;color:var(--ink)">📁 Assign to Saving Project</div>
+          <button class="btn btn-ghost btn-sm" onclick="closeProjModal()">✕</button>
+        </div>
+        <div style="font-size:.83rem;color:var(--sky);font-weight:600;margin-bottom:1rem;padding:.5rem .75rem;background:rgba(56,189,248,.06);border-radius:8px;border:1px solid rgba(56,189,248,.12)" id="modal-offer-info"></div>
+
+        <div style="display:flex;gap:.5rem;margin-bottom:1.1rem">
+          <button class="btn btn-primary btn-sm" id="mtog-new" onclick="toggleModalMode('new')">+ Create new project</button>
+          <button class="btn btn-ghost btn-sm" id="mtog-existing" onclick="toggleModalMode('existing')">Assign to existing</button>
+          <button class="btn btn-ghost btn-sm" onclick="skipAndGoToOffers()" style="margin-left:auto;color:var(--ink3);font-size:.75rem">Skip for now →</button>
+        </div>
+
+        <!-- EXISTING PROJECT -->
+        <div id="modal-existing-block" style="display:none">
+          <label>Select Saving Project</label>
+          <select id="modal-proj-select" style="width:100%;margin-top:.35rem"><option value="">– Select –</option></select>
+        </div>
+
+        <!-- NEW PROJECT — all non-calculated fields -->
+        <div id="modal-new-block">
+          <div class="fr c2">
+            <div><label>Project Title <span style="color:var(--red)">*</span></label><input type="text" id="mp-title" placeholder="e.g. SAP Implementation Q3"/></div>
+            <div><label>Business Entity <span style="color:var(--red)">*</span></label><select id="mp-company"><option value="">– Select –</option></select></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Category</label><select id="mp-cat"><option value="">– Select –</option><option>IT &amp; Telecom</option><option>Facility Management</option><option>Services &amp; External People</option><option>Marketing &amp; Product</option><option>Events &amp; Gifts</option><option>Finance &amp; Insurance</option><option>Travel &amp; Expenses</option><option>Vehicles &amp; Logistics</option></select></div>
+            <div><label>Sub Category</label><input type="text" id="mp-subcat" placeholder="e.g. Day Rate, SaaS License"/></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Material Group</label><input type="text" id="mp-matgrp" placeholder="e.g. IT Consulting"/></div>
+            <div><label>Supplier Region</label><select id="mp-region"><option value="">– Select –</option><option>DE</option><option>AT</option><option>NL</option><option>BE</option><option>IT</option><option>FR</option><option>ES</option><option>PT</option><option>UK</option><option>Other</option></select></div>
+          </div>
+          <div class="fr c3">
+            <div><label>Status</label><select id="mp-status"><option value="Pipeline">Pipeline</option><option value="In Progress">In Progress</option><option value="Finished">Finished</option></select></div>
+            <div><label>Complexity</label><select id="mp-complex"><option value="">– Select –</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+            <div><label>Offer Unit</label><select id="mp-unit"><option value="">– Select –</option><option>Dayrate</option><option>Kg</option><option># Licenses</option></select></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Baseline / Budget</label><input type="number" id="mp-baseline" placeholder="0"/></div>
+            <div><label>Initial Offer Total</label><input type="number" id="mp-init-offer" placeholder="auto-filled from offer"/></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Cost Saving</label><input type="number" id="mp-costsaving" placeholder="0"/></div>
+            <div><label>Cost Avoidance</label><input type="number" id="mp-costavoid" placeholder="0"/></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Tender?</label><select id="mp-tender"><option value="">– Select –</option><option>Yes</option><option>No</option></select></div>
+            <div><label>Early Involvement?</label><select id="mp-ei"><option value="">– Select –</option><option>Yes</option><option>No</option></select></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Saving Start Date</label><input type="date" id="mp-sstart"/></div>
+            <div><label>Saving End Date</label><input type="date" id="mp-send"/></div>
+          </div>
+          <div class="fr c2">
+            <div><label>PO Number</label><input type="text" id="mp-po" placeholder="e.g. PO-2024-1234"/></div>
+            <div><label>Opportunity Assessment</label><input type="text" id="mp-opp" placeholder="High / Medium / Low"/></div>
+          </div>
+          <div class="fr"><div><label>Project Description</label><textarea id="mp-desc" style="min-height:60px" placeholder="Brief description of scope and objectives"></textarea></div></div>
+        </div>
+
+        <div id="modal-status" class="sm" style="margin-top:.75rem"></div>
+        <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;margin-top:.75rem;font-size:.9rem" onclick="saveFromModal()">💾 Save Project &amp; Link Offer</button>
       </div>
     </div>
 
@@ -563,49 +631,72 @@ tbody tr:hover td{background:var(--sky-dim)}
         <div class="card" id="offer-ext" style="display:none">
           <div class="ct"><div class="ctl">② Review Extracted Fields</div><span class="badge bb">✦ AI Extracted</span></div>
           <div class="fr c3">
-            <div><label>Supplier</label><input type="text" id="of-sup"/></div>
+            <div><label>Supplier Name</label><input type="text" id="of-sup"/></div>
             <div><label>Total Price</label><input type="number" id="of-total"/></div>
-            <div><label>Currency</label><input type="text" id="of-cur" value="EUR"/></div>
+            <div><label>Currency</label><select id="of-cur"><option value="EUR">EUR</option><option value="USD">USD</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="SEK">SEK</option><option value="DKK">DKK</option><option value="NOK">NOK</option></select></div>
           </div>
           <div class="fr c3">
             <div><label>Day Rate</label><input type="number" id="of-dr"/></div>
-            <div><label>Project Days</label><input type="number" id="of-days"/></div>
-            <div><label>Start Date</label><input type="date" id="of-start"/></div>
+            <div><label>Units / Days</label><input type="number" id="of-days"/></div>
+            <div><label>Offer Date</label><input type="date" id="of-start"/></div>
+          </div>
+          <div class="fr c2">
+            <div><label>Offer Stage</label><select id="offer-type"><option value="1st Offer">1st Offer</option><option value="Rebid">Rebid</option><option value="Final Offer">Final Offer</option><option value="Other">Other</option></select></div>
+            <div><label>Business Entity</label><select id="of-company"><option value="">– Select –</option></select></div>
           </div>
           <div class="fr"><div><label>Scope / Description</label><textarea id="of-scope" style="min-height:50px"></textarea></div></div>
           <div id="offer-insight" class="ai-box" style="display:none;margin-top:.25rem">
             <div class="ai-tag"><div class="ai-dot"></div>AI Negotiation Insight</div>
             <div class="ai-text" id="offer-ins-text"></div>
           </div>
+          <div style="display:flex;gap:.75rem;margin-top:1rem">
+            <button class="btn btn-primary" style="flex:1;justify-content:center;padding:11px" onclick="saveOfferOnly()">💾 Save to All Offers</button>
+            <button class="btn btn-soft" style="flex:1;justify-content:center;padding:11px" onclick="showAssignPanel()">📁 Save &amp; Assign to Project →</button>
+          </div>
         </div>
 
         <div class="card" id="offer-assign" style="display:none">
-          <div class="ct"><div class="ctl">③ Assign to Project</div></div>
+          <div class="ct"><div class="ctl">③ Assign to Saving Project</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('offer-assign').style.display='none'">✕ Cancel</button></div>
           <div style="display:flex;gap:.5rem;margin-bottom:1rem">
-            <button class="btn btn-primary btn-sm" id="tog-existing" onclick="toggleProjMode('existing')">Select existing</button>
+            <button class="btn btn-primary btn-sm" id="tog-existing" onclick="toggleProjMode('existing')">Assign to existing</button>
             <button class="btn btn-ghost btn-sm" id="tog-new" onclick="toggleProjMode('new')">+ Create new project</button>
           </div>
           <div id="proj-existing-block">
-            <div class="fr"><div><label>Saving Project</label><select id="offer-project"><option value="">– Select project –</option></select></div></div>
+            <div class="fr"><div><label>Select Saving Project</label><select id="offer-project"><option value="">– Select project –</option></select></div></div>
           </div>
           <div id="proj-new-block" style="display:none">
+            <div style="font-size:.75rem;color:var(--sky);font-weight:600;margin-bottom:.75rem;padding:.5rem .75rem;background:rgba(56,189,248,.07);border-radius:8px;border:1px solid rgba(56,189,248,.15)">✦ Fields pre-filled from AI extraction — review and complete</div>
             <div class="fr c2">
-              <div><label>Project Name</label><input type="text" id="new-proj-name" placeholder="e.g. SAP Implementation Q3"/></div>
+              <div><label>Project Title</label><input type="text" id="new-proj-name" placeholder="e.g. SAP Implementation Q3"/></div>
               <div><label>Category</label><select id="new-proj-cat"><option value="">– Select –</option><option>IT &amp; Telecom</option><option>Facility Management</option><option>Services &amp; External People</option><option>Marketing &amp; Product</option><option>Events &amp; Gifts</option><option>Finance &amp; Insurance</option><option>Travel &amp; Expenses</option><option>Vehicles &amp; Logistics</option></select></div>
             </div>
             <div class="fr c3">
+              <div><label>Sub Category</label><input type="text" id="new-proj-subcat"/></div>
+              <div><label>Material Group</label><input type="text" id="new-proj-matgrp"/></div>
               <div><label>Supplier Region</label><select id="new-proj-region"><option value="">– Select –</option><option>DE</option><option>AT</option><option>NL</option><option>BE</option><option>IT</option><option>FR</option><option>ES</option><option>PT</option><option>UK</option><option>Other</option></select></div>
-              <div><label>Status</label><select id="new-proj-status"><option value="In Progress">In Progress</option><option value="Pipeline">Pipeline</option><option value="Finished">Finished</option></select></div>
+            </div>
+            <div class="fr c3">
+              <div><label>Status</label><select id="new-proj-status"><option value="Pipeline">Pipeline</option><option value="In Progress">In Progress</option><option value="Finished">Finished</option></select></div>
               <div><label>Complexity</label><select id="new-proj-complex"><option value="">– Select –</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+              <div><label>Offer Unit</label><select id="new-proj-unit"><option value="">– Select –</option><option>Dayrate</option><option>Kg</option><option># Licenses</option></select></div>
             </div>
             <div class="fr c2">
-              <div><label>Tender</label><select id="new-proj-tender"><option value="">– Select –</option><option>Yes</option><option>No</option></select></div>
-              <div><label>Early Involvement</label><select id="new-proj-ei"><option value="">– Select –</option><option>Yes</option><option>No</option></select></div>
+              <div><label>Baseline (Budget)</label><input type="number" id="new-proj-baseline"/></div>
+              <div><label>Tender?</label><select id="new-proj-tender"><option value="">– Select –</option><option>Yes</option><option>No</option></select></div>
             </div>
+            <div class="fr c2">
+              <div><label>Early Involvement?</label><select id="new-proj-ei"><option value="">– Select –</option><option>Yes</option><option>No</option></select></div>
+              <div><label>Saving Start Date</label><input type="date" id="new-proj-sstart"/></div>
+            </div>
+            <div class="fr c2">
+              <div><label>Saving End Date</label><input type="date" id="new-proj-send"/></div>
+              <div></div>
+            </div>
+            <div class="fr"><div><label>Project Description</label><textarea id="new-proj-desc" style="min-height:50px"></textarea></div></div>
           </div>
-          <div class="fr"><div><label>Offer Stage</label><select id="offer-type"><option value="1st Offer">1st Offer (Initial)</option><option value="Rebid">Rebid (Counter)</option><option value="Final Offer">Final Offer (Agreed)</option></select></div></div>
-          <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;font-size:.875rem;margin-top:.25rem" onclick="saveOffer()">💾 Save & Go to RFQ Dashboard</button>
+          <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;font-size:.875rem;margin-top:.5rem" onclick="saveOffer()">💾 Save Offer + Project</button>
         </div>
+
       </div>
     </div>
 
@@ -860,7 +951,18 @@ function nav(n){
   else if(n==='rfq')renderRFQ();
   else if(n==='opportunities')renderOpps();
   else if(n==='ai-coach')fillSels();
-  else if(n==='offer-upload'){fillSels();document.getElementById('offer-ext').style.display='none';document.getElementById('offer-assign').style.display='none';}
+  else if(n==='offer-upload'){
+    fillSels();
+    document.getElementById('offer-ext').style.display='none';
+    document.getElementById('offer-assign').style.display='none';
+    CURRENT_PDF_URL='';
+    // Fill company dropdown in step 2
+    const csel=document.getElementById('of-company');
+    if(csel){
+      csel.innerHTML='<option value="">– Select –</option>'+DB.companies.map(c=>`<option value="${c.id}">${gf(c,'Company Name','Name')}</option>`).join('');
+      if(DB.companies.length===1)csel.value=DB.companies[0].id;
+    }
+  }
 }
 function renderCur(){const a=document.querySelector('.screen.active');if(!a)return;nav(a.id.replace('screen-',''))}
 
@@ -1023,20 +1125,177 @@ function showDetail(id){
 
 // ── OFFERS ──
 function renderOffers(){
-  document.getElementById('offers-tbody').innerHTML=DB.offers.map(o=>{
-    const pid=o['Saving Project'];
+  document.getElementById('offers-tbody').innerHTML=DB.offers.map((o,i)=>{
+    const pid=Array.isArray(o['Saving Project'])?o['Saving Project'][0]:o['Saving Project'];
     const proj=DB.projects.find(p=>p.id===pid||gf(p,'Project Title','Name')===pid);
-    const pname=proj?gf(proj,'Project Title','Name'):'–';
+    const pname=proj?`<a onclick="nav('detail','${proj.id}')" style="color:var(--sky);cursor:pointer;font-weight:600">${gf(proj,'Project Title','Name')}</a>`
+      :`<span style="color:var(--ink4);font-size:.8rem;font-style:italic">Unassigned</span>`;
+    const cid=o['Company ID']||(proj&&(Array.isArray(proj['Company Name'])?proj['Company Name'][0]:proj['Company Name']));
+    const comp=cid?DB.companies.find(c=>c.id===cid):null;
+    const cname=comp?gf(comp,'Company Name','Name'):'–';
+    const supplier=gf(o,'Supplier Name')||((gf(o,'Scope Extract')||'').split('\n')[0])||'–';
+    const ofDate=gf(o,'Offer Date')||'';
+    const pdfUrl=o['_pdfUrl']||'';
+    const pdfBtn=pdfUrl?`<a href="${pdfUrl}" target="_blank" style="color:var(--sky);font-size:.78rem;text-decoration:none">📄 View</a>`:`<span style="color:var(--ink4);font-size:.75rem">–</span>`;
+    const assignBtn=!proj
+      ?`<button class="btn btn-soft btn-sm" onclick="openProjModal('${o.id}')" style="font-size:.72rem;padding:4px 10px;white-space:nowrap">📁 → Project</button>`
+      :`<button class="btn btn-ghost btn-sm" onclick="openProjModal('${o.id}')" style="font-size:.72rem;padding:4px 10px;white-space:nowrap">↔ Reassign</button>`;
     return`<tr>
-      <td style="font-weight:600">${pname}</td>
+      <td style="font-weight:600">${supplier}</td>
+      <td style="color:var(--ink2);font-size:.82rem">${cname}</td>
       <td>${sbadge(gf(o,'Offer Type'))}</td>
-      <td>${(gf(o,'Scope Extract')||'').split('\n')[0]||'–'}</td>
       <td class="td-num td-b">${fmt(gf(o,'Total Price'))}</td>
-      <td class="td-num">${gf(o,'Day Rate')?'€'+gf(o,'Day Rate'):'–'}</td>
-      <td class="td-num">${gf(o,'Project Days')||'–'}</td>
+      <td class="td-num">${gf(o,'Day Rate')?'€'+Number(gf(o,'Day Rate')).toLocaleString('de-DE'):'–'}</td>
       <td>${gf(o,'Currency')||'EUR'}</td>
+      <td style="color:var(--ink3);font-size:.8rem">${ofDate||'–'}</td>
+      <td>${pname}</td>
+      <td style="text-align:center">${pdfBtn}</td>
+      <td>${assignBtn}</td>
     </tr>`;
-  }).join('')||`<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink3)">No offers yet</td></tr>`;
+  }).join('')||`<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--ink3)">No offers yet — <a onclick="nav('offer-upload')" style="color:var(--sky);cursor:pointer">upload your first offer</a></td></tr>`;
+}
+
+// ── PROJECT MODAL (from All Offers) ──
+let MODAL_OFFER_ID = '';
+function openProjModal(offerId, fromUpload=false){
+  MODAL_OFFER_ID=offerId;
+  const o=DB.offers.find(x=>x.id===offerId);
+  if(!o)return;
+  const sup=gf(o,'Supplier Name')||'';
+  const price=gf(o,'Total Price')||'';
+  const cur=gf(o,'Currency')||'EUR';
+
+  // Modal title — different wording when coming straight from upload
+  const titleEl=document.getElementById('modal-title');
+  if(titleEl){
+    if(fromUpload){
+      titleEl.innerHTML='✅ Offer saved! &nbsp;<span style="font-weight:300;font-size:.9rem;color:var(--ink3)">Assign to a Saving Project?</span>';
+    } else {
+      titleEl.innerHTML='📁 Assign to Saving Project';
+    }
+  }
+
+  document.getElementById('modal-offer-info').innerHTML=
+    `<strong>${sup||'Unknown supplier'}</strong>${price?' &nbsp;·&nbsp; '+fmt(price,cur):''}${gf(o,'Offer Date')?' &nbsp;·&nbsp; '+gf(o,'Offer Date'):''}`;
+
+  // Pre-fill new project fields from offer data
+  const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||''};
+  sv('mp-title', sup);
+  sv('mp-subcat','');
+  sv('mp-matgrp','');
+  sv('mp-baseline','');
+  sv('mp-init-offer', price);
+  sv('mp-costsaving','');
+  sv('mp-costavoid','');
+  sv('mp-desc', gf(o,'Scope Extract')||'');
+  sv('mp-sstart','');
+  sv('mp-send','');
+  sv('mp-complex','');
+  sv('mp-unit','');
+  sv('mp-tender','');
+  sv('mp-ei','');
+  sv('mp-po','');
+  sv('mp-opp','');
+  sv('mp-region','');
+  sv('mp-status','Pipeline');
+
+  // Fill company dropdown
+  const mpco=document.getElementById('mp-company');
+  mpco.innerHTML='<option value="">– Select –</option>'+DB.companies.map(c=>`<option value="${c.id}">${gf(c,'Company Name','Name')}</option>`).join('');
+  if(DB.companies.length===1)mpco.value=DB.companies[0].id;
+  const ocid=o['Company ID'];
+  if(ocid)mpco.value=ocid;
+
+  // Fill existing projects dropdown
+  const mps=document.getElementById('modal-proj-select');
+  mps.innerHTML='<option value="">– Select –</option>'+DB.projects.map(p=>`<option value="${p.id}">${gf(p,'Project Title','Name')}</option>`).join('');
+
+  // Default to "new project" when coming from upload (most common case), existing when from All Offers
+  toggleModalMode(fromUpload?'new':'existing');
+  document.getElementById('modal-status').className='sm';
+  document.getElementById('modal-status').innerHTML='';
+  document.getElementById('proj-modal-overlay').style.display='flex';
+}
+function closeProjModal(e){
+  if(e&&e.target!==document.getElementById('proj-modal-overlay'))return;
+  document.getElementById('proj-modal-overlay').style.display='none';
+}
+function toggleModalMode(mode){
+  const isNew=mode==='new';
+  document.getElementById('modal-existing-block').style.display=isNew?'none':'block';
+  document.getElementById('modal-new-block').style.display=isNew?'block':'none';
+  document.getElementById('mtog-existing').className='btn btn-'+(isNew?'ghost':'primary')+' btn-sm';
+  document.getElementById('mtog-new').className='btn btn-'+(isNew?'primary':'ghost')+' btn-sm';
+}
+function skipAndGoToOffers(){
+  document.getElementById('proj-modal-overlay').style.display='none';
+  toast('Offer saved — assign to a project anytime from All Offers','');
+  nav('offers');
+}
+async function saveFromModal(){
+  const o=DB.offers.find(x=>x.id===MODAL_OFFER_ID);
+  if(!o){toast('Offer not found','error');return}
+  const isNew=document.getElementById('modal-new-block').style.display!=='none';
+  setSt('modal-status','loading','Saving...');
+  let pid='';
+  try{
+    if(isNew){
+      const pname=document.getElementById('mp-title').value.trim();
+      if(!pname){setSt('modal-status','error','Enter a project title');return}
+      const compId=document.getElementById('mp-company').value;
+      if(!compId){setSt('modal-status','error','Select a Business Entity');return}
+      const v=id=>document.getElementById(id)?.value||undefined;
+      const n=id=>{const x=parseFloat(document.getElementById(id)?.value);return isNaN(x)?undefined:x};
+      const pfields={
+        'Project Title':pname,
+        'Company Name':compId,
+        'Category':v('mp-cat'),
+        'Sub Category':v('mp-subcat'),
+        'Material Group':v('mp-matgrp'),
+        'Supplier Region':v('mp-region'),
+        'Status':v('mp-status')||'Pipeline',
+        'Complexity':v('mp-complex'),
+        'Offer Unit':v('mp-unit'),
+        'Tender':v('mp-tender'),
+        'Early Involvement':v('mp-ei'),
+        'Baseline':n('mp-baseline'),
+        'Initial Offer Total':n('mp-init-offer')||parseFloat(gf(o,'Total Price'))||undefined,
+        'Cost saving':n('mp-costsaving'),
+        'Cost avoidance':n('mp-costavoid'),
+        'Saving start date':v('mp-sstart'),
+        'Saving End date':v('mp-send'),
+        'PO number':v('mp-po'),
+        'Opportunity assessment':v('mp-opp'),
+        'Project Description':v('mp-desc'),
+      };
+      Object.keys(pfields).forEach(k=>{if(pfields[k]===undefined||pfields[k]==='')delete pfields[k]});
+      if(DEMO||!TOKEN){
+        const np={id:'p_'+Date.now(),...pfields};
+        DB.projects.push(np);pid=np.id;fillSels();
+      }else{
+        const r=await atCreateSmart('Saving Project',pfields);
+        pid=r.id;
+      }
+    }else{
+      pid=document.getElementById('modal-proj-select').value;
+      if(!pid){setSt('modal-status','error','Select a project');return}
+    }
+    // Now link offer → project
+    if(DEMO||!TOKEN){
+      o['Saving Project']=pid;
+    }else{
+      await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${o.id}`,{
+        method:'PATCH',
+        headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},
+        body:JSON.stringify({fields:{'Saving Project':pid}})
+      });
+      o['Saving Project']=pid; // update local cache
+      await loadAll();
+    }
+    document.getElementById('proj-modal-overlay').style.display='none';
+    toast('Offer linked to project ✓','success');
+    renderOffers();
+  }catch(e){setSt('modal-status','error',e.message)}
 }
 
 // ── RFQ DASHBOARD ──
@@ -1103,6 +1362,9 @@ function toggleProjMode(mode){
 
 async function handleOfferFile(e){
   const file=e.target.files[0];if(!file)return;
+  if(file.type==='application/pdf'||file.name.endsWith('.pdf')){
+    CURRENT_PDF_URL=URL.createObjectURL(file);
+  }
   setSt('extract-status','loading',`Reading ${file.name}...`);
   try{
     let text='';
@@ -1163,56 +1425,114 @@ async function extractOffer(){
   finally{hideL()}
 }
 
+let CURRENT_PDF_URL = '';
+
+// Save offer → then immediately show "Create project?" modal
+async function saveOfferOnly(){
+  const fields=collectOfferFields();
+  if(!fields)return;
+  showL('Saving offer...');
+  let savedId='o_'+Date.now();
+  try{
+    if(DEMO||!TOKEN){
+      DB.offers.push({id:savedId,...fields,_pdfUrl:CURRENT_PDF_URL});
+    }else{
+      const saved=await atCreateSmart('Offer',fields);
+      if(saved?.id){savedId=saved.id;DB.offers.push({id:savedId,...fields,_pdfUrl:CURRENT_PDF_URL});}
+      await loadAll();
+    }
+    hideL();
+    resetOfferForm();
+    // Auto-open project modal immediately
+    openProjModal(savedId, true);
+  }catch(e){toast('Error: '+e.message,'error');hideL()}
+}
+
+// Show the assign panel below extracted fields (kept for optional direct use)
+function showAssignPanel(){
+  if(!collectOfferFields())return;
+  const panel=document.getElementById('offer-assign');
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+  fillSels();
+}
+
+// Save offer + create/assign project inline (from Offer Upload page)
 async function saveOffer(){
   const isNew=document.getElementById('proj-new-block').style.display!=='none';
+  const companyId=document.getElementById('of-company').value;
   let pid='';
   if(isNew){
     const pname=document.getElementById('new-proj-name').value.trim();
-    if(!pname){toast('Enter a project name','error');return}
+    if(!pname){toast('Enter a project title','error');return}
     const pfields={
       'Project Title':pname,
       'Category':document.getElementById('new-proj-cat')?.value||undefined,
+      'Sub Category':document.getElementById('new-proj-subcat')?.value||undefined,
+      'Material Group':document.getElementById('new-proj-matgrp')?.value||undefined,
       'Supplier Region':document.getElementById('new-proj-region')?.value||undefined,
-      'Status':document.getElementById('new-proj-status')?.value||'In Progress',
+      'Status':document.getElementById('new-proj-status')?.value||'Pipeline',
       'Complexity':document.getElementById('new-proj-complex')?.value||undefined,
+      'Offer Unit':document.getElementById('new-proj-unit')?.value||undefined,
       'Tender':document.getElementById('new-proj-tender')?.value||undefined,
       'Early Involvement':document.getElementById('new-proj-ei')?.value||undefined,
-      'Initial Offer Total':parseFloat(document.getElementById('of-total').value)||undefined
+      'Baseline':parseFloat(document.getElementById('new-proj-baseline')?.value)||undefined,
+      'Saving start date':document.getElementById('new-proj-sstart')?.value||undefined,
+      'Saving End date':document.getElementById('new-proj-send')?.value||undefined,
+      'Project Description':document.getElementById('new-proj-desc')?.value||undefined,
+      'Initial Offer Total':parseFloat(document.getElementById('of-total').value)||undefined,
+      'Company Name':companyId||undefined,
     };
     Object.keys(pfields).forEach(k=>{if(!pfields[k])delete pfields[k]});
     showL('Creating project...');
     try{
       if(DEMO||!TOKEN){const np={id:'p_'+Date.now(),...pfields};DB.projects.push(np);pid=np.id;fillSels()}
-      else{const r=await atCreateSmart('Saving Project',pfields);pid=r.id;await loadAll();}
+      else{const r=await atCreateSmart('Saving Project',pfields);pid=r.id;}
     }catch(e){toast('Project error: '+e.message,'error');hideL();return}
   }else{
     pid=document.getElementById('offer-project').value;
     if(!pid){toast('Select a project','error');return}
   }
-  const supName=document.getElementById('of-sup').value||'';
-  const scopeText=document.getElementById('of-scope').value||'';
-  const scopeWithSup=supName?(supName+(scopeText?'\n'+scopeText:'')):scopeText;
-  const fields={
-    'Offer Type':document.getElementById('offer-type').value,
-    'Total Price':parseFloat(document.getElementById('of-total').value)||undefined,
-    'Currency':document.getElementById('of-cur').value||'EUR',
-    'Scope Extract':scopeWithSup||undefined,
-    'Saving Project':pid,
-    'Offer Date':document.getElementById('of-start').value||undefined,
-  };
+  const fields=collectOfferFields();
+  if(!fields){hideL();return}
+  fields['Saving Project']=pid;
+  fields['Company ID']=companyId||undefined;
   Object.keys(fields).forEach(k=>{if(fields[k]===undefined)delete fields[k]});
   showL('Saving offer...');
   try{
-    if(DEMO||!TOKEN)DB.offers.push({id:'o_'+Date.now(),...fields});
-    else{await atCreateSmart('Offer',fields);await loadAll();}
-    fillSels();
-    document.getElementById('offer-text').value='';
-    document.getElementById('offer-ext').style.display='none';
-    document.getElementById('offer-assign').style.display='none';
-    toast('Offer saved ✓','success');
-    nav('rfq');
+    if(DEMO||!TOKEN){DB.offers.push({id:'o_'+Date.now(),...fields,_pdfUrl:CURRENT_PDF_URL});}
+    else{
+      const saved=await atCreateSmart('Offer',fields);
+      if(saved?.id)DB.offers.push({id:saved.id,...fields,_pdfUrl:CURRENT_PDF_URL});
+      await loadAll();
+    }
+    CURRENT_PDF_URL='';
+    resetOfferForm();
+    toast('Offer + Project saved ✓','success');
+    nav('offers');
   }catch(e){toast('Error: '+e.message,'error')}
   finally{hideL()}
+}
+
+function collectOfferFields(){
+  const supName=document.getElementById('of-sup').value.trim();
+  const total=parseFloat(document.getElementById('of-total').value);
+  if(!supName&&!total){toast('Enter at least a supplier name or price','error');return null}
+  return{
+    'Supplier Name':supName||undefined,
+    'Offer Type':document.getElementById('offer-type').value,
+    'Total Price':total||undefined,
+    'Currency':document.getElementById('of-cur').value||'EUR',
+    '# Units':parseFloat(document.getElementById('of-days').value)||undefined,
+    'Offer Date':document.getElementById('of-start').value||undefined,
+    'Scope Extract':document.getElementById('of-scope').value||undefined,
+  };
+}
+
+function resetOfferForm(){
+  document.getElementById('offer-text').value='';
+  document.getElementById('offer-ext').style.display='none';
+  document.getElementById('offer-assign').style.display='none';
 }
 
 // ── CSV IMPORT ──
