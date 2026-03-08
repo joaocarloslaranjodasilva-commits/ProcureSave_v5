@@ -450,7 +450,7 @@ tbody tr:hover td{background:var(--sky-dim)}
       </div>
       <div class="tw">
         <table>
-          <thead><tr><th>Project</th><th>Category</th><th>Region</th><th>Status</th><th>Initial</th><th>Final</th><th>Savings</th><th>%</th><th>Benchmark</th></tr></thead>
+          <thead><tr><th>Project</th><th>Category</th><th>Region</th><th>Status</th><th>Initial</th><th>Final</th><th>Savings</th><th>%</th><th>Benchmark</th><th></th></tr></thead>
           <tbody id="proj-tbody"></tbody>
         </table>
       </div>
@@ -470,7 +470,7 @@ tbody tr:hover td{background:var(--sky-dim)}
       </div>
       <div class="tw">
         <table>
-          <thead><tr><th>Supplier</th><th>Company</th><th>Stage</th><th>Total Price</th><th>Day Rate</th><th>Currency</th><th>Date</th><th>Saving Project</th><th style="text-align:center">PDF</th><th></th></tr></thead>
+          <thead><tr><th>Supplier</th><th>Company</th><th>Stage</th><th>Total Price</th><th>Day Rate</th><th>Currency</th><th>Date</th><th>Saving Project</th><th style="text-align:center">PDF</th><th></th><th></th></tr></thead>
           <tbody id="offers-tbody"></tbody>
         </table>
       </div>
@@ -774,7 +774,14 @@ async function atFetch(tbl){
 }
 async function atCreate(tbl,fields){
   const r=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(tbl)}`,{method:'POST',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({fields})});
-  if(!r.ok)throw new Error(await r.text());return r.json();
+  if(!r.ok){
+    const errText=await r.text();
+    let msg=errText;
+    try{const j=JSON.parse(errText);msg=j.error?.message||j.message||errText;}catch(e){}
+    console.error(`Airtable ${r.status} on ${tbl}:`,msg,'\nFields sent:',JSON.stringify(fields,null,2));
+    throw new Error(`${r.status}: ${msg}`);
+  }
+  return r.json();
 }
 
 // ── SCHEMA (full — field types + choices + linked tables) ──
@@ -1035,18 +1042,19 @@ function renderProjs(){
   const ps=DB.projects.filter(p=>!q||(gf(p,'Project Title','Name')||'').toLowerCase().includes(q)||(gf(p,'Category')||'').toLowerCase().includes(q));
   document.getElementById('proj-tbody').innerHTML=ps.map(p=>{
     const ini=gf(p,'Initial Offer Total'),fin=gf(p,'Final Offer Total'),sav=gf(p,'Cost saving'),pct=gf(p,'Total savings %');
-    return`<tr onclick="showDetail('${p.id}')">
-      <td style="font-weight:600">${gf(p,'Project Title','Name')||'–'}</td>
-      <td>${gf(p,'Category')||'–'}</td>
-      <td>${gf(p,'Supplier Region','Region')||'–'}</td>
-      <td>${sbadge(gf(p,'Status'))}</td>
-      <td class="td-num">${ini!=null?fmt(ini):'–'}</td>
-      <td class="td-num">${fin!=null?fmt(fin):'–'}</td>
-      <td class="td-num td-g">${sav!=null?fmt(sav):'–'}</td>
-      <td class="td-num td-g">${pct!=null?fmtP(pct):'–'}</td>
-      <td>${bmBadge(p)}</td>
+    return`<tr>
+      <td style="font-weight:600;cursor:pointer" onclick="showDetail('${p.id}')">${gf(p,'Project Title','Name')||'–'}</td>
+      <td onclick="showDetail('${p.id}')" style="cursor:pointer">${gf(p,'Category')||'–'}</td>
+      <td onclick="showDetail('${p.id}')" style="cursor:pointer">${gf(p,'Supplier Region','Region')||'–'}</td>
+      <td onclick="showDetail('${p.id}')" style="cursor:pointer">${sbadge(gf(p,'Status'))}</td>
+      <td class="td-num" onclick="showDetail('${p.id}')" style="cursor:pointer">${ini!=null?fmt(ini):'–'}</td>
+      <td class="td-num" onclick="showDetail('${p.id}')" style="cursor:pointer">${fin!=null?fmt(fin):'–'}</td>
+      <td class="td-num td-g" onclick="showDetail('${p.id}')" style="cursor:pointer">${sav!=null?fmt(sav):'–'}</td>
+      <td class="td-num td-g" onclick="showDetail('${p.id}')" style="cursor:pointer">${pct!=null?fmtP(pct):'–'}</td>
+      <td onclick="showDetail('${p.id}')" style="cursor:pointer">${bmBadge(p)}</td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red);padding:4px 8px;font-size:.72rem" onclick="deleteRecord('project','${p.id}',event)">🗑</button></td>
     </tr>`;
-  }).join('')||`<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--ink3)">No projects found</td></tr>`;
+  }).join('')||`<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--ink3)">No projects found</td></tr>`;
   document.getElementById('proj-search').oninput=renderProjs;
 }
 
@@ -1151,8 +1159,9 @@ function renderOffers(){
       <td>${pname}</td>
       <td style="text-align:center">${pdfBtn}</td>
       <td>${assignBtn}</td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red);padding:4px 8px;font-size:.72rem" onclick="deleteRecord('offer','${o.id}',event)">🗑</button></td>
     </tr>`;
-  }).join('')||`<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--ink3)">No offers yet — <a onclick="nav('offer-upload')" style="color:var(--sky);cursor:pointer">upload your first offer</a></td></tr>`;
+  }).join('')||`<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--ink3)">No offers yet — <a onclick="nav('offer-upload')" style="color:var(--sky);cursor:pointer">upload your first offer</a></td></tr>`;
 }
 
 // ── PROJECT MODAL (from All Offers) ──
@@ -1433,13 +1442,17 @@ async function saveOfferOnly(){
   if(!fields)return;
   showL('Saving offer...');
   let savedId='o_'+Date.now();
+  const supName=fields._supplierName;delete fields._supplierName;
   try{
     if(DEMO||!TOKEN){
-      DB.offers.push({id:savedId,...fields,_pdfUrl:CURRENT_PDF_URL});
+      DB.offers.push({id:savedId,...fields,'Supplier Name':supName,_pdfUrl:CURRENT_PDF_URL});
     }else{
       const saved=await atCreateSmart('Offer',fields);
-      if(saved?.id){savedId=saved.id;DB.offers.push({id:savedId,...fields,_pdfUrl:CURRENT_PDF_URL});}
+      if(saved?.id){savedId=saved.id;DB.offers.push({id:savedId,...fields,'Supplier Name':supName,_pdfUrl:CURRENT_PDF_URL});}
       await loadAll();
+      // Patch local cache with supplier name for display
+      const lo=DB.offers.find(o=>o.id===savedId);
+      if(lo&&supName)lo['Supplier Name']=supName;
     }
     hideL();
     resetOfferForm();
@@ -1495,16 +1508,20 @@ async function saveOffer(){
   }
   const fields=collectOfferFields();
   if(!fields){hideL();return}
+  const supName=fields._supplierName;delete fields._supplierName;
   fields['Saving Project']=pid;
-  fields['Company ID']=companyId||undefined;
+  if(companyId)fields['Company ID']=companyId;
   Object.keys(fields).forEach(k=>{if(fields[k]===undefined)delete fields[k]});
   showL('Saving offer...');
   try{
-    if(DEMO||!TOKEN){DB.offers.push({id:'o_'+Date.now(),...fields,_pdfUrl:CURRENT_PDF_URL});}
+    if(DEMO||!TOKEN){DB.offers.push({id:'o_'+Date.now(),...fields,'Supplier Name':supName,_pdfUrl:CURRENT_PDF_URL});}
     else{
       const saved=await atCreateSmart('Offer',fields);
-      if(saved?.id)DB.offers.push({id:saved.id,...fields,_pdfUrl:CURRENT_PDF_URL});
+      const oid=saved?.id||'o_'+Date.now();
+      DB.offers.push({id:oid,...fields,'Supplier Name':supName,_pdfUrl:CURRENT_PDF_URL});
       await loadAll();
+      const lo=DB.offers.find(o=>o.id===oid);
+      if(lo&&supName)lo['Supplier Name']=supName;
     }
     CURRENT_PDF_URL='';
     resetOfferForm();
@@ -1518,21 +1535,98 @@ function collectOfferFields(){
   const supName=document.getElementById('of-sup').value.trim();
   const total=parseFloat(document.getElementById('of-total').value);
   if(!supName&&!total){toast('Enter at least a supplier name or price','error');return null}
-  return{
-    'Supplier Name':supName||undefined,
-    'Offer Type':document.getElementById('offer-type').value,
+  const scope=document.getElementById('of-scope').value||'';
+  // Airtable Offer fields (exact names from schema):
+  // Supplier Name doesn't exist as own field → store in Scope Extract prefixed
+  const scopeFull=supName?(supName+(scope?'\n'+scope:'')):scope;
+  const fields={
+    'Offer Type':document.getElementById('offer-type').value||undefined,
     'Total Price':total||undefined,
     'Currency':document.getElementById('of-cur').value||'EUR',
     '# Units':parseFloat(document.getElementById('of-days').value)||undefined,
     'Offer Date':document.getElementById('of-start').value||undefined,
-    'Scope Extract':document.getElementById('of-scope').value||undefined,
+    'Scope Extract':scopeFull||undefined,
   };
+  // Remove undefined
+  Object.keys(fields).forEach(k=>{if(fields[k]===undefined)delete fields[k]});
+  // Also keep supplier name in memory for display (not sent to Airtable)
+  fields['_supplierName']=supName||undefined;
+  return fields;
 }
 
 function resetOfferForm(){
   document.getElementById('offer-text').value='';
   document.getElementById('offer-ext').style.display='none';
   document.getElementById('offer-assign').style.display='none';
+}
+
+// ── DELETE ──
+async function deleteRecord(type, id, e){
+  if(e)e.stopPropagation();
+  const label=type==='project'?'project (and all linked offers)':'offer';
+  if(!confirm(`Delete this ${label}? This cannot be undone.`))return;
+  if(type==='project'){
+    if(TOKEN&&!DEMO){
+      try{
+        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Saving Project')}/${id}`,
+          {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}});
+        // Also delete linked offers from Airtable
+        const linked=DB.offers.filter(o=>{const p=o['Saving Project'];return Array.isArray(p)?p.includes(id):p===id});
+        await Promise.all(linked.map(o=>
+          fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${o.id}`,
+            {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}})
+        ));
+      }catch(err){toast('Delete failed: '+err.message,'error');return}
+    }
+    DB.projects=DB.projects.filter(p=>p.id!==id);
+    DB.offers=DB.offers.filter(o=>{const p=o['Saving Project'];return Array.isArray(p)?!p.includes(id):p!==id});
+    renderProjs();
+    toast('Project deleted','');
+  } else {
+    if(TOKEN&&!DEMO){
+      try{
+        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${id}`,
+          {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}});
+      }catch(err){toast('Delete failed: '+err.message,'error');return}
+    }
+    DB.offers=DB.offers.filter(o=>o.id!==id);
+    renderOffers();
+    toast('Offer deleted','');
+  }
+}
+
+// ── DELETE ──
+async function deleteRecord(type, id, e){
+  if(e)e.stopPropagation();
+  const label=type==='project'?'project (and all linked offers)':'offer';
+  if(!confirm(`Delete this ${label}? This cannot be undone.`))return;
+  if(type==='project'){
+    if(TOKEN&&!DEMO){
+      try{
+        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Saving Project')}/${id}`,
+          {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}});
+        const linked=DB.offers.filter(o=>{const p=o['Saving Project'];return Array.isArray(p)?p.includes(id):p===id});
+        await Promise.all(linked.map(o=>
+          fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${o.id}`,
+            {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}})
+        ));
+      }catch(err){toast('Delete failed: '+err.message,'error');return}
+    }
+    DB.projects=DB.projects.filter(p=>p.id!==id);
+    DB.offers=DB.offers.filter(o=>{const p=o['Saving Project'];return Array.isArray(p)?!p.includes(id):p!==id});
+    renderProjs();
+    toast('Project deleted','');
+  }else{
+    if(TOKEN&&!DEMO){
+      try{
+        await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent('Offer')}/${id}`,
+          {method:'DELETE',headers:{Authorization:`Bearer ${TOKEN}`}});
+      }catch(err){toast('Delete failed: '+err.message,'error');return}
+    }
+    DB.offers=DB.offers.filter(o=>o.id!==id);
+    renderOffers();
+    toast('Offer deleted','');
+  }
 }
 
 // ── CSV IMPORT ──
